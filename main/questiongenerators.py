@@ -96,6 +96,6 @@ def questions_from_topic(num_topics:int, client):
             sorted_ans = dict(sorted(total_ans.items(), key=lambda item: item[1], reverse=True))
             total_topics[question.lower()] = sorted_ans
         except ValueError:
-            question = "Error is question generation."
+            question = "Error in question generation."
             total_topics[question.lower()] = {}
     return total_topics
