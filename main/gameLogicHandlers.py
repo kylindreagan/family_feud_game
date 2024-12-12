@@ -12,6 +12,8 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
     print("The", stealing_name, "family has a chance to steal!")
     sleep(2)
     answer = speech_to_text(topic)
+    print("Survey Says!")
+    sleep(2)
     if answer in board and not visited[answer]:
         print("CORRECT!")
         sleep(.25)
@@ -38,6 +40,8 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
         current_family = name1 if turn == 1 else name2
         print(f"It's the {current_family}'s turn.")
         answer = speech_to_text(topic)
+        print("Survey Says!")
+        sleep(2)
         
         if answer in board and not visited[answer]:
             print("CORRECT!")
@@ -67,6 +71,8 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
     while guesses > 0:
         print(f"It's the {family_name} family's turn. You have {guesses} guesses remaining.")
         answer = speech_to_text(topic)
+        print("Survey Says!")
+        sleep(2)
         if answer in board and not visited[answer]:
             print("CORRECT!")
             turn_score += board[answer]
