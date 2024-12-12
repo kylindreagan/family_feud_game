@@ -1,7 +1,7 @@
 import speech_recognition as sr
 from time import sleep
 from typing import List, Dict, Tuple
-from  groq import Groq
+from groq import Groq
 from difflib import get_close_matches
 
 def speech_to_text(topic:str) -> str:
@@ -27,7 +27,6 @@ def print_board(board: Dict[str, int], visited: Dict[str, bool], reveal: bool = 
         display = f"{answer} {points}" if visited[answer] or reveal else "#" * 10
         print(f"{idx}: {display}")
 
-
 def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool]) -> Tuple[bool, int]:
     print("The", stealing_name, "family has a chance to steal!")
     sleep(2)
@@ -48,73 +47,39 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         visited[closest] = True
         return True, board[closest]
     
-
-def decide_turn(name1:str,name2:str,topic:str,board: Dict[str, int], visited: Dict[str, bool]) -> Tuple[bool, int, Dict]:
+def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visited: Dict[str, bool]) -> Tuple[bool, int, Dict[str, bool]]:
     turn = 1
     chances = 0
     points_gained = False
-    fam1startpoints = fam2startpoints = 0
+    family_points = {name1: 0, name2: 0}
+
     while chances < 2 or not points_gained:
-        if chances >= 2 and points_gained:
-            break
-        if turn == 1:
-            print("It's the",name1+" family's turn.")
-            answer = speech_to_text(topic)
-            if answer in board and not visited[answer]:
-                print("CORRECT!")
-                sleep(.25)
-                fam1startpoints = board[answer]
-                visited[answer] = True
-                points_gained = True
-                print_board(board, visited)
-                sleep(.75)
-            else:
-                closest = close_enough(answer,visited)
-                if closest == "null":
-                    print("WRONG")
-                    sleep(.5)
-                    print_board(board, visited)
-                    sleep(.75)
-                else:
-                    print("CORRECT!")
-                    sleep(.25)
-                    fam1startpoints = board[closest]
-                    visited[closest] = True
-                    points_gained = True
-                    print_board(board, visited)
-                    sleep(.75)
+        current_family = name1 if turn == 1 else name2
+        print(f"It's the {current_family}'s turn.")
+        answer = speech_to_text(topic)
+        
+        if answer in board and not visited[answer]:
+            print("CORRECT!")
+            family_points[current_family] += board[answer]
+            visited[answer] = True
+            points_gained = True
         else:
-            print("It's the",name2+" family's turn.")
-            answer = speech_to_text(topic)
-            if answer in board and not visited[answer]:
-                print("CORRECT!")
-                sleep(.25)
-                fam2startpoints = board[answer]
-                points_gained = True
-                visited[answer] = True
-                print_board(board, visited)
-                sleep(.75)
+            closest = close_enough(answer, [key for key, val in visited.items() if not val])
+            if closest == "null":
+                print("WRONG")
             else:
-                closest = close_enough(answer,visited)
-                if closest == "null":
-                    print("WRONG")
-                    sleep(.5)
-                    print_board(board, visited)
-                    sleep(.75)
-                else:
-                    print("CORRECT!")
-                    sleep(.25)
-                    fam2startpoints = board[closest]
-                    visited[closest] = True
-                    points_gained = True
-                    print_board(board, visited)
-                    sleep(.75)
+                print("CORRECT!")
+                family_points[current_family] += board[closest]
+                visited[closest] = True
+                points_gained = True
+
+        print_board(board, visited)
+        sleep(0.75)
         chances += 1
         turn = 3 - turn
-    if fam1startpoints >= fam2startpoints:
-        return True, fam1startpoints + fam2startpoints, visited
-    else:
-        return False, fam1startpoints + fam2startpoints, visited
+
+    winner = name1 if family_points[name1] >= family_points[name2] else name2
+    return winner == name1, sum(family_points.values()), visited
 
 def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], guesses: int) -> Tuple[int, bool]:
     turn_score = 0
