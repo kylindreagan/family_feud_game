@@ -73,12 +73,14 @@ def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: D
                 visited[answer] = True
                 points_gained = True
                 print_board(visited, board)
+                sleep(.75)
             else:
                 closest = close_enough(answer,visited)
                 if closest == "null":
                     print("WRONG")
                     sleep(.5)
                     print_board(visited, board)
+                    sleep(.75)
                 else:
                     print("CORRECT!")
                     sleep(.25)
@@ -86,6 +88,7 @@ def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: D
                     visited[closest] = True
                     points_gained = True
                     print_board(visited, board)
+                    sleep(.75)
             turn -= 1
         else:
             print("It's the",name2+" family's turn.")
@@ -93,16 +96,18 @@ def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: D
             if answer in board and not visited[answer]:
                 print("CORRECT!")
                 sleep(.25)
-                print_board(visited, board)
                 fam2startpoints = board[answer]
                 points_gained = True
                 visited[answer] = True
+                print_board(visited, board)
+                sleep(.75)
             else:
                 closest = close_enough(answer,visited)
                 if closest == "null":
                     print("WRONG")
                     sleep(.5)
                     print_board(visited, board)
+                    sleep(.75)
                 else:
                     print("CORRECT!")
                     sleep(.25)
@@ -110,6 +115,7 @@ def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: D
                     visited[closest] = True
                     points_gained = True
                     print_board(visited, board)
+                    sleep(.75)
             turn += 1
         chances += 1
     if fam1startpoints >= fam2startpoints:
@@ -253,6 +259,7 @@ for topic in rounds:
                 turnscore += board[text]
                 Is_Answer[text] = True
                 print_board(Is_Answer, board)
+                sleep(.75)
             else:
                 closest = close_enough_AI(text,Is_Answer, client)
                 if closest == "null":
@@ -260,14 +267,16 @@ for topic in rounds:
                     sleep(.5)
                     guesses -= 1
                     print_board(Is_Answer, board)
+                    sleep(.75)
                 else:
                     print("CORRECT!")
                     sleep(.25)
                     turnscore += board[closest]
                     Is_Answer[closest] = True
                     print_board(Is_Answer, board)
+                    sleep(.75)
             if all(value == True for value in Is_Answer.values()):
-                print_board(Is_Answer, board)
+                sleep(1)
                 blackout = True
                 break
         else:
@@ -280,6 +289,7 @@ for topic in rounds:
                 turnscore += board[text]
                 Is_Answer[text] = True
                 print_board(Is_Answer, board)
+                sleep(.75)
             else:
                 closest = close_enough_AI(text,Is_Answer, client)
                 if closest == "null":
@@ -287,14 +297,15 @@ for topic in rounds:
                     sleep(.5)
                     guesses -= 1
                     print_board(Is_Answer, board)
+                    sleep(.75)
                 else:
                     print("CORRECT!")
                     sleep(.25)
                     turnscore += board[closest]
                     Is_Answer[closest] = True
                     print_board(Is_Answer, board)
+                    sleep(.75)
             if all(value == True for value in Is_Answer.values()):
-                print_board(Is_Answer, board)
                 blackout = True
                 break
                 
