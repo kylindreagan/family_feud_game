@@ -1,6 +1,6 @@
 from time import sleep
 from typing import List, Dict, Tuple
-from proximity_measures import close_enough_AI
+from proximityMeasures import close_enough_AI
 from SpeechtoText import speech_to_text
 
 def print_board(board: Dict[str, int], visited: Dict[str, bool], reveal: bool = False) -> None:
