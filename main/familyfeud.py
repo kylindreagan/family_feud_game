@@ -171,6 +171,7 @@ def main():
     for topic in rounds:
         print(f"Current Scores:\n{family1_name}: {score[family1_name]}\n{family2_name}: {score[family2_name]}")
         board = rounds[topic]
+
         blackout = False
         visited = {i:False for i in board}
         turn_score = 0
@@ -178,6 +179,10 @@ def main():
         print("We asked 100 people," + topic)
         print_board(board, visited)
         sleep(1)
+        if len(board) == 0:
+            print("This topic has no questions!")
+            sleep(2)
+            continue
         family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited,client)
         if family1_turn:
             turn_score, blackout = handle_turn(family1_name, topic, board, visited, 3, client)

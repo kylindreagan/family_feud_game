@@ -86,12 +86,16 @@ def questions_from_topic(num_topics:int, client):
         question = " ".join(response[0])
         total_ans = {}
         on_topic = True
-        for j in response:
-            if on_topic:
-                on_topic = False
-                continue
-            points = j.pop()
-            total_ans[" ".join(j).lower().strip()] = int(points)
-        sorted_ans = dict(sorted(total_ans.items(), key=lambda item: item[1], reverse=True))
-        total_topics[question.lower()] = sorted_ans
+        try:
+            for j in response:
+                if on_topic:
+                    on_topic = False
+                    continue
+                points = j.pop()
+                total_ans[" ".join(j).lower().strip()] = int(points)
+            sorted_ans = dict(sorted(total_ans.items(), key=lambda item: item[1], reverse=True))
+            total_topics[question.lower()] = sorted_ans
+        except ValueError:
+            question = "Error is question generation."
+            total_topics[question.lower()] = {}
     return total_topics
