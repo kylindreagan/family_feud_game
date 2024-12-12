@@ -1,0 +1,14 @@
+Name a fruit 5
+Apple 20
+Banana 20
+Strawberry 20
+Orange 20
+Pineapple 20
+What are things you can do in the game Minecraft? 7
+Crafting 25
+Mining 20
+Building 15
+Fighting 10
+Exploring 8
+Surviving 5
+Enchanting 5
