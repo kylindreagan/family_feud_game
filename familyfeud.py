@@ -22,17 +22,11 @@ def speech_to_text(topic:str) -> str:
             print("Error: Could not request results from Google Speech Recognition service")
             continue
 
-def print_board(visited: Dict[str, bool], board: Dict[str, int]) -> None:
-    count = 1
-    for i in board:
-        print(f"{count}: {i} {board[i]}" if visited[i] else f"{count}: {'#' * 10}")
-        count += 1
+def print_board(board: Dict[str, int], visited: Dict[str, bool], reveal: bool = False) -> None:
+    for idx, (answer, points) in enumerate(board.items(), start=1):
+        display = f"{answer} {points}" if visited[answer] or reveal else "#" * 10
+        print(f"{idx}: {display}")
 
-def print_board_final(board: Dict[str, int]) -> None:
-    count = 1
-    for i in board:
-        print(f"{count}: {i} {board[i]}")
-        count += 1
 
 def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool]) -> Tuple[bool, int]:
     print("The", stealing_name, "family has a chance to steal!")
@@ -55,7 +49,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         return True, board[closest]
     
 
-def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: Dict[str, bool]) -> Tuple[bool, int, Dict]:
+def decide_turn(name1:str,name2:str,topic:str,board: Dict[str, int], visited: Dict[str, bool]) -> Tuple[bool, int, Dict]:
     turn = 1
     chances = 0
     points_gained = False
@@ -72,14 +66,14 @@ def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: D
                 fam1startpoints = board[answer]
                 visited[answer] = True
                 points_gained = True
-                print_board(visited, board)
+                print_board(board, visited)
                 sleep(.75)
             else:
                 closest = close_enough(answer,visited)
                 if closest == "null":
                     print("WRONG")
                     sleep(.5)
-                    print_board(visited, board)
+                    print_board(board, visited)
                     sleep(.75)
                 else:
                     print("CORRECT!")
@@ -87,9 +81,8 @@ def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: D
                     fam1startpoints = board[closest]
                     visited[closest] = True
                     points_gained = True
-                    print_board(visited, board)
+                    print_board(board, visited)
                     sleep(.75)
-            turn -= 1
         else:
             print("It's the",name2+" family's turn.")
             answer = speech_to_text(topic)
@@ -99,14 +92,14 @@ def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: D
                 fam2startpoints = board[answer]
                 points_gained = True
                 visited[answer] = True
-                print_board(visited, board)
+                print_board(board, visited)
                 sleep(.75)
             else:
                 closest = close_enough(answer,visited)
                 if closest == "null":
                     print("WRONG")
                     sleep(.5)
-                    print_board(visited, board)
+                    print_board(board, visited)
                     sleep(.75)
                 else:
                     print("CORRECT!")
@@ -114,14 +107,40 @@ def turn_decider(name1:str,name2:str,topic:str,board: Dict[str, int], visited: D
                     fam2startpoints = board[closest]
                     visited[closest] = True
                     points_gained = True
-                    print_board(visited, board)
+                    print_board(board, visited)
                     sleep(.75)
-            turn += 1
         chances += 1
+        turn = 3 - turn
     if fam1startpoints >= fam2startpoints:
         return True, fam1startpoints + fam2startpoints, visited
     else:
         return False, fam1startpoints + fam2startpoints, visited
+
+def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], guesses: int) -> Tuple[int, bool]:
+    turn_score = 0
+    while guesses > 0:
+        print(f"It's the {family_name}'s turn. You have {guesses} guesses remaining.")
+        answer = speech_to_text(topic)
+        if answer in board and not visited[answer]:
+            print("CORRECT!")
+            turn_score += board[answer]
+            visited[answer] = True
+        else:
+            closest = close_enough_AI(answer, [key for key, val in visited.items() if not val])
+            if closest == "null":
+                print("WRONG")
+                guesses -= 1
+            else:
+                print("CORRECT!")
+                turn_score += board[closest]
+                visited[closest] = True
+        print_board(board, visited)
+        sleep(0.75)
+
+        if all(visited.values()):
+            print("All answers revealed!")
+            return turn_score, True
+    return turn_score, False
 
 def questions_from_file(num_topics:int=1, filepath:str="answers.txt"):
     total_topics = {}
@@ -202,135 +221,70 @@ def close_enough_AI(answer:str, visited: Dict[str, bool], model_client) -> str:
         return response
 
     # Fallback to string similarity if model response is invalid
-    closest_match = get_close_matches(answer, unvisited, n=1, cutoff=0.8)
-    return closest_match[0] if closest_match else "null"
+    return close_enough(answer, unvisited)
 
-def close_enough(answer:str, visited: Dict[str, bool]) -> str:
-    unvisited = [x for x in visited if visited[x] != True]
-    # Fallback to string similarity if model response is invalid
+def close_enough(answer:str, unvisited: List) -> str:
     closest_match = get_close_matches(answer, unvisited, n=1, cutoff=0.8)
     return closest_match[0] if closest_match else "null"
 
 client = Groq()
 while True:
-    question_mode = input("SELECT MODE. TYPE FILE (for custom games) OR AI (for randomly generated games)")
+    question_mode = input("SELECT MODE. TYPE FILE (for custom games) OR AI (for randomly generated games) ")
     if question_mode.lower() == "file":
-        numrounds = int(input("Number of rounds?"))
-        filename = input("Directory to file?")
+        numrounds = int(input("Number of rounds? "))
+        filename = input("Directory to file? ")
         rounds = questions_from_file(numrounds,filename)
         break
     elif question_mode.lower() == "ai":
-        numrounds = int(input("Number of rounds?"))
-        temperature = float(input("TESTING: Input temperature from 0.0 to 1.0 (.7 being standard)"))
+        numrounds = int(input("Number of rounds? "))
+        temperature = float(input("TESTING: Input temperature from 0.0 to 1.0 (.7 being standard) "))
         rounds = questions_from_AI(numrounds, client)
         break
     else:
         print("INCORRECT MODE")
 
+def main():
+    family1_name = input("FAMILY 1. ENTER YOUR NAME NOW. MAY IT GO DOWN IN HISTORY. ")
+    family2_name = input("FAMILY 2. ENTER YOUR NAME NOW. MAY YOUR JOURNEY THUS FAR BE HONORED. ")
+    if family1_name == family2_name:
+        family1_name += "(1)"
+        family2_name += "(2)"
+    score = {family1_name: 0, family2_name: 0}
 
-name1 = input("ENTER NAME OF FAMILY 1: ")
-name2 = input("ENTER NAME OF FAMILY 2: ")
-if name1 == name2:
-    name1 += "(1)"
-    name2 += "(2)"
-score1 = score2 = 0
-numtopics = 2
 
+    for topic in rounds:
+        print(f"Current Scores:\n{family1_name}: {score[family1_name]}\n{family2_name}: {score[family2_name]}")
+        board = rounds[topic]
+        blackout = False
+        visited = {i:False for i in board}
+        turn_score = 0
 
-for topic in rounds:
-    guesses = 3
-    board = rounds[topic]
-    blackout = False
-    Is_Answer = {i:False for i in board}
-    turnscore = 0
-
-    print("We asked 100 people," + topic)
-    print_board(Is_Answer, board)
-    sleep(1)
-    family1turn, turnscore, Is_Answer = turn_decider(name1,name2,topic,board,Is_Answer)
-    while guesses != 0:
-        if family1turn:
-            print("It's the",name1+" family's turn. You have", guesses, "guesses remaining.")
-            sleep(.5)
-            text = speech_to_text(topic)
-            if text in board and not Is_Answer[text]:
-                print("CORRECT!")
-                sleep(.25)
-                turnscore += board[text]
-                Is_Answer[text] = True
-                print_board(Is_Answer, board)
-                sleep(.75)
-            else:
-                closest = close_enough_AI(text,Is_Answer, client)
-                if closest == "null":
-                    print("WRONG")
-                    sleep(.5)
-                    guesses -= 1
-                    print_board(Is_Answer, board)
-                    sleep(.75)
-                else:
-                    print("CORRECT!")
-                    sleep(.25)
-                    turnscore += board[closest]
-                    Is_Answer[closest] = True
-                    print_board(Is_Answer, board)
-                    sleep(.75)
-            if all(value == True for value in Is_Answer.values()):
-                sleep(1)
-                blackout = True
-                break
+        print("We asked 100 people," + topic)
+        print_board(board, visited)
+        sleep(1)
+        family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited)
+        if family1_turn:
+            turn_score, blackout = handle_turn(family1_name, topic, board, visited, guesses=3)
+            if not blackout:
+                steal_score = steal(family2_name, topic, board, visited)
+                if steal_score > 0:
+                    turn_score += steal_score
+                    family1_turn = False
         else:
-            print("It's the",name2+" family's turn. You have", guesses, "guesses remaining.")
-            sleep(.5)
-            text = speech_to_text(topic)
-            if text in board and not Is_Answer[text]:
-                print("CORRECT!")
-                sleep(.25)
-                turnscore += board[text]
-                Is_Answer[text] = True
-                print_board(Is_Answer, board)
-                sleep(.75)
-            else:
-                closest = close_enough_AI(text,Is_Answer, client)
-                if closest == "null":
-                    print("WRONG")
-                    sleep(.5)
-                    guesses -= 1
-                    print_board(Is_Answer, board)
-                    sleep(.75)
-                else:
-                    print("CORRECT!")
-                    sleep(.25)
-                    turnscore += board[closest]
-                    Is_Answer[closest] = True
-                    print_board(Is_Answer, board)
-                    sleep(.75)
-            if all(value == True for value in Is_Answer.values()):
-                blackout = True
-                break
-                
+            turn_score, blackout = handle_turn(family2_name, topic, board, visited, guesses=3)
+            if not blackout:
+                steal_score = steal(family1_name, topic, board, visited)
+                if steal_score > 0:
+                    turn_score += steal_score
+                    family1_turn = True
+        
+        print_board(board,visited,True)
+        sleep(1)
 
-    if not blackout:
-        if family1turn:
-            stolen, stole_points = steal(name2,topic,board,Is_Answer)
-        else:
-            stolen, stole_points = steal(name1,topic,board,Is_Answer)
-        if stolen:
-            family1turn = not family1turn
-            turnscore += stole_points
-    
-    print_board_final(board)
-    sleep(1)
+        score[family1_name] += turn_score if family1_turn else 0
+        score[family2_name] += turn_score if not family1_turn else 0
 
-    if family1turn:
-        score1 += turnscore
-        print("The",name1, "family takes this round")
-        sleep(.75)
-    else:
-        score2 += turnscore
-        print("The",name2, "family takes this round")
-        sleep(.75)
+    print(f"Final Scores:\n{family1_name}: {score[family1_name]}\n{family2_name}: {score[family2_name]}")
 
-    print("TOTAL SCORES: ")
-    print(name1 +":",score1)
-    print(name2 +":",score2)
+if __name__ == "__main__":
+    main()
