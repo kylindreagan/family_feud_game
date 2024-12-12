@@ -1,7 +1,7 @@
 from time import sleep
 from typing import List, Dict, Tuple
 from groq import Groq
-from turns import steal, decide_turn, handle_turn, print_board
+from gameLogicHandlers import steal, decide_turn, handle_turn, print_board
 from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic
 
 file = False
