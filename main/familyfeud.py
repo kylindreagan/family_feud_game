@@ -6,20 +6,6 @@ from questiongenerators import questions_from_AI, questions_from_file, questions
 file = False
 topic_AI = True
 def main():
-    """while True:
-        question_mode = input("SELECT MODE. TYPE FILE (for custom games) OR AI (for randomly generated games) ")
-        if question_mode.lower() == "file":
-            numrounds = int(input("Number of rounds? "))
-            filename = input("Directory to file? ")
-            rounds = questions_from_file(numrounds,filename)
-            break
-        elif question_mode.lower() == "ai":
-            numrounds = int(input("Number of rounds? "))
-            temperature = float(input("TESTING: Input temperature from 0.0 to 1.0 (.7 being standard) "))
-            rounds = questions_from_AI(numrounds, client)
-            break
-        else:
-            print("INCORRECT MODE")"""
     client = Groq()
     rounds = questions_from_topic(5, client)
     family1_name = input("FAMILY 1. ENTER YOUR NAME NOW. MAY IT GO DOWN IN HISTORY. ")
