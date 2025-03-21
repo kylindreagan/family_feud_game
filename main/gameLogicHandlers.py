@@ -4,6 +4,7 @@ from proximityMeasures import close_enough_AI
 from SpeechtoText import speech_to_text
 from PyQt5.QtWidgets import QLabel, QApplication
 from qwindows import AnswerDialog
+from sound_player import play_sound
 
 def print_board(board: Dict[str, int], visited: Dict[str, bool], reveal: bool = False) -> None:
     for idx, (answer, points) in enumerate(board.items(), start=1):
@@ -47,6 +48,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         else:
             info_label.setText("CORRECT!")
             QApplication.processEvents()
+        play_sound("sounds/correct.mp3")
         sleep(.25)
         visited[answer] = True
         return board[answer], board
@@ -58,6 +60,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
             else:
                 info_label.setText("WRONG!")
                 QApplication.processEvents()
+            play_sound("sounds/wrong.wav")
             sleep(.5)
             return 0, board
         if info_label == None:
@@ -65,6 +68,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         else:
             info_label.setText("CORRECT!")
             QApplication.processEvents()
+        play_sound("sounds/correct.mp3")
         sleep(.25)
         visited[closest] = True
         return board[closest], board
@@ -101,6 +105,7 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
             else:
                 info_label.setText("CORRECT!")
                 QApplication.processEvents()
+            play_sound("sounds/correct.mp3")
             family_points[current_family] += board[answer]
             visited[answer] = True
             points_gained = True
@@ -112,12 +117,14 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
                 else:
                     info_label.setText("WRONG!")
                     QApplication.processEvents()
+                play_sound("sounds/wrong.wav")
             else:
                 if info_label == None:
                     print("CORRECT!")
                 else:
                     info_label.setText("CORRECT!")
                     QApplication.processEvents()
+                play_sound("sounds/correct.mp3")
                 family_points[current_family] += board[closest]
                 visited[closest] = True
                 points_gained = True
@@ -158,6 +165,7 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
             else:
                 info_label.setText("CORRECT!")
                 QApplication.processEvents()
+            play_sound("sounds/correct.mp3")
             turn_score += board[answer]
             visited[answer] = True
         else:
@@ -169,12 +177,14 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
                     info_label.setText("WRONG!")
                     QApplication.processEvents()
                 guesses -= 1
+                play_sound("sounds/wrong.wav")
             else:
                 if info_label == None:
                     print("CORRECT!")
                 else:
                     info_label.setText("CORRECT!")
                     QApplication.processEvents()
+                play_sound("sounds/correct.mp3")
                 turn_score += board[closest]
                 visited[closest] = True
         if board_label == None:

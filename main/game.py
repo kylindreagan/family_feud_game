@@ -7,6 +7,7 @@ from groq import Groq
 from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
 from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic
 from qwindows import FileDialog
+from sound_player import play_sound
 
 
 class FamilyFeudApp(QWidget):
@@ -21,10 +22,8 @@ class FamilyFeudApp(QWidget):
         self.setWindowTitle('Family Feud Game')
         self.setGeometry(100, 100, 800, 600)
 
-        # Main layout
         main_layout = QVBoxLayout()
 
-        # Create widgets for entering family names
         self.family1_name_input = QLineEdit(self)
         self.family1_name_input.setPlaceholderText("Family 1 - Enter your name")
         self.family2_name_input = QLineEdit(self)
@@ -34,7 +33,6 @@ class FamilyFeudApp(QWidget):
         name_input_layout.addWidget(self.family1_name_input)
         name_input_layout.addWidget(self.family2_name_input)
 
-        # Button to start the game
         self.start_game_button = QPushButton('Start Game', self)
         self.start_game_button.clicked.connect(self.start_game)
 
@@ -45,7 +43,6 @@ class FamilyFeudApp(QWidget):
         self.image_label.setGeometry(100, 100, 200, 150)
         main_layout.addWidget(self.image_label)
 
-        # Labels for displaying the scores and game info
         self.score_label = QLabel("Current Scores:\nFamily 1: 0\nFamily 2: 0", self)
         self.topic_label = QLabel("Topic: None", self)
         self.turn_label = QLabel("Turn: None", self)
@@ -76,8 +73,6 @@ class FamilyFeudApp(QWidget):
         self.menu_button.setEnabled(False)
         self.menu_button.setVisible(False)
         
-
-        # Add widgets to the layout
         main_layout.addWidget(self.AI_use)
         main_layout.addWidget(self.num_rounds)
         main_layout.addWidget(self.voice_commands)
@@ -85,6 +80,8 @@ class FamilyFeudApp(QWidget):
         main_layout.addWidget(self.start_game_button)
         
         self.setLayout(main_layout)
+
+        play_sound("sounds/themesong.mp3")
 
     def start_game(self):
         family1_name = self.family1_name_input.text()
