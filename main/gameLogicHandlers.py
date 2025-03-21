@@ -3,7 +3,7 @@ from typing import List, Dict, Tuple
 from proximityMeasures import close_enough_AI
 from SpeechtoText import speech_to_text
 from PyQt5.QtWidgets import QLabel, QApplication
-from qwindows import InputDialog
+from qwindows import AnswerDialog
 
 def print_board(board: Dict[str, int], visited: Dict[str, bool], reveal: bool = False) -> None:
     for idx, (answer, points) in enumerate(board.items(), start=1):
@@ -32,7 +32,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
     if voice:
         answer = speech_to_text(topic, topic_label, info_label)
     else:
-        dialog = InputDialog()
+        dialog = AnswerDialog()
         dialog.exec_()  # This will block until the dialog is closed
         answer = dialog.get_data()
     if info_label == None:
@@ -85,7 +85,7 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
         if voice:
             answer = speech_to_text(topic, topic_label, info_label)
         else:
-            dialog = InputDialog()
+            dialog = AnswerDialog()
             dialog.exec_()  # This will block until the dialog is closed
             answer = dialog.get_data()
         if info_label == None:
@@ -143,7 +143,7 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
         if voice:
             answer = speech_to_text(topic, topic_label, info_label)
         else:
-            dialog = InputDialog()
+            dialog = AnswerDialog()
             dialog.exec_()  # This will block until the dialog is closed
             answer = dialog.get_data()
         if info_label == None:

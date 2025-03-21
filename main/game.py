@@ -6,6 +6,7 @@ from time import sleep
 from groq import Groq
 from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
 from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic
+from qwindows import FileDialog
 
 
 class FamilyFeudApp(QWidget):
@@ -106,7 +107,13 @@ class FamilyFeudApp(QWidget):
         if self.AI:
             rounds = questions_from_topic(num_rounds, self.client, True)
         else:
-            rounds = questions_from_file(num_rounds)
+            dialog = FileDialog()
+            dialog.exec_()  # This will block until the dialog is closed
+            file_name = dialog.get_data()
+            try:
+                rounds = questions_from_file(num_rounds, "games/"+file_name+".txt")
+            except Exception:
+                rounds = questions_from_file(num_rounds)
         self.rounds = rounds
 
         self.run_game(family1_name, family2_name)

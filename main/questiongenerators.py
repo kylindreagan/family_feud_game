@@ -1,6 +1,6 @@
 from typing import List, Dict, Tuple
 from groq import Groq
-from qwindows import InputDialog
+from qwindows import QuestionDialog
 
 PROMPT_TEMPLATE = (
     "You are an AI tasked with generating family feud-style questions. "
@@ -11,28 +11,24 @@ PROMPT_TEMPLATE = (
     "Name a fruit\nApple 20\nBanana 20\nStrawberry 20\nOrange 20\n"
 )
 
-def questions_from_file(num_topics:int=1, filepath:str="games/answers.txt"):
+def questions_from_file(num_topics:int=1, filepath:str="games/testanswers.txt"):
     total_topics = {}
-    try:
-        with open(filepath, "r") as file:
-            for i in range(num_topics):
-                topic_line = file.readline().strip("\n")
-                if not topic_line or len(topic_line) < 2 or not topic_line[-1].isdigit():
-                    raise ValueError("Malformed topic line.")
-                topic = topic_line[:-1]
-                num_questions = int(topic_line[-1])
-                total_ans = {}
-                for line in range(int(num_questions)):
-                    temp = file.readline().strip("\n").rsplit(" ", 1)
-                    if len(temp) != 2 or not temp[1].isdigit():
-                        raise ValueError("Malformed answer line.")
-                    answer, points = temp
-                    total_ans[answer.lower()] = int(points)
-                sorted_ans = dict(sorted(total_ans.items(), key=lambda item: item[1]))
-                total_topics[topic] = sorted_ans
-        return total_topics
-    except (FileNotFoundError, ValueError) as e:
-        print(f"Error: {e}")
+    with open(filepath, "r") as file:
+        for i in range(num_topics):
+            topic_line = file.readline().strip("\n")
+            if not topic_line or len(topic_line) < 2 or not topic_line[-1].isdigit():
+                raise ValueError("Malformed topic line.")
+            topic = topic_line[:-1]
+            num_questions = int(topic_line[-1])
+            total_ans = {}
+            for line in range(int(num_questions)):
+                temp = file.readline().strip("\n").rsplit(" ", 1)
+                if len(temp) != 2 or not temp[1].isdigit():
+                    raise ValueError("Malformed answer line.")
+                answer, points = temp
+                total_ans[answer.lower()] = int(points)
+            sorted_ans = dict(sorted(total_ans.items(), key=lambda item: item[1]))
+            total_topics[topic] = sorted_ans
     return total_topics
 
 def questions_from_AI(num_topics:int, client):
@@ -87,7 +83,7 @@ def questions_from_topic(num_topics:int, client, game=False):
         if not game:
             topic = input("Enter a topic for question "+str(i+1)+": ")
         else:
-            dialog = InputDialog()
+            dialog = QuestionDialog()
             dialog.exec_()  # This will block until the dialog is closed
             topic = dialog.get_data()
         
