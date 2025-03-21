@@ -1,5 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
 from time import sleep
 from groq import Groq
 from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
@@ -35,6 +37,13 @@ class FamilyFeudApp(QWidget):
         self.start_game_button = QPushButton('Start Game', self)
         self.start_game_button.clicked.connect(self.start_game)
 
+        self.image_label = QLabel(self)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        pixmap_image = QPixmap("images/logofued.png")
+        self.image_label.setPixmap(pixmap_image)
+        self.image_label.setGeometry(100, 100, 200, 150)
+        main_layout.addWidget(self.image_label)
+
         # Labels for displaying the scores and game info
         self.score_label = QLabel("Current Scores:\nFamily 1: 0\nFamily 2: 0", self)
         self.topic_label = QLabel("Topic: None", self)
@@ -58,6 +67,16 @@ class FamilyFeudApp(QWidget):
         self.AI_use.stateChanged.connect(self.AI_toggle)
         self.num_rounds = QLineEdit(self)
         self.num_rounds.setPlaceholderText("Enter number of rounds: ")
+        self.menu_button = QPushButton('Back to Menu', self)
+        self.start_game_button.clicked.connect(self.reinit_widgets)
+
+        self.score_label.setVisible(False)
+        self.turn_label.setVisible(False)
+        self.topic_label.setVisible(False)
+        self.info_label.setVisible(False)
+        self.menu_button.setEnabled(False)
+        self.menu_button.setVisible(False)
+        
 
         # Add widgets to the layout
         main_layout.addWidget(self.AI_use)
@@ -65,20 +84,6 @@ class FamilyFeudApp(QWidget):
         main_layout.addWidget(self.voice_commands)
         main_layout.addLayout(name_input_layout)
         main_layout.addWidget(self.start_game_button)
-        main_layout.addWidget(self.score_label)
-        main_layout.addWidget(self.topic_label)
-        main_layout.addWidget(self.turn_label)
-        main_layout.addWidget(self.info_label)
-        main_layout.addWidget(self.board1)
-        main_layout.addWidget(self.board2)
-        main_layout.addWidget(self.board3)
-        main_layout.addWidget(self.board4)
-        main_layout.addWidget(self.board5)
-        main_layout.addWidget(self.board6)
-        main_layout.addWidget(self.board7)
-        main_layout.addWidget(self.board8)
-        main_layout.addWidget(self.board9)
-        main_layout.addWidget(self.board10)
         
         self.setLayout(main_layout)
 
@@ -107,6 +112,7 @@ class FamilyFeudApp(QWidget):
         self.run_game(family1_name, family2_name)
 
     def run_game(self, family1_name, family2_name):
+        self.remove_initial_widgets()
         current_round = 0
         full_board = [self.board1,self.board2,self.board3,self.board4,self.board5,self.board6,self.board7,self.board8,self.board9,self.board10]
         for topic in self.rounds:
@@ -146,10 +152,102 @@ class FamilyFeudApp(QWidget):
             self.update_game_info(family1_name, family2_name, topic, current_round)
 
         self.final_scores(family1_name, family2_name)
+        self.menu_button.setEnabled(True)
+        self.menu_button.setVisible(True)
         
+    def remove_initial_widgets(self):
+        # Remove widgets related to game setup
+        self.layout().removeWidget(self.image_label)
+        self.layout().removeWidget(self.family1_name_input)
+        self.layout().removeWidget(self.family2_name_input)
+        self.layout().removeWidget(self.start_game_button)
+        self.layout().removeWidget(self.AI_use)
+        self.layout().removeWidget(self.voice_commands)
+        self.layout().removeWidget(self.num_rounds)
+
+        # Delete the widgets
+        self.family1_name_input.setVisible(False)
+        self.family2_name_input.setVisible(False)
+        self.start_game_button.setVisible(False)
+        self.AI_use.setVisible(False)
+        self.voice_commands.setVisible(False)
+        self.num_rounds.setVisible(False)
+        self.image_label.setVisible(False)
+
+        self.layout().addWidget(self.score_label)
+        self.layout().addWidget(self.topic_label)
+        self.layout().addWidget(self.turn_label)
+        self.layout().addWidget(self.info_label)
+        self.layout().addWidget(self.board1)
+        self.layout().addWidget(self.board2)
+        self.layout().addWidget(self.board3)
+        self.layout().addWidget(self.board4)
+        self.layout().addWidget(self.board5)
+        self.layout().addWidget(self.board6)
+        self.layout().addWidget(self.board7)
+        self.layout().addWidget(self.board8)
+        self.layout().addWidget(self.board9)
+        self.layout().addWidget(self.board10)
+
+        self.score_label.setVisible(True)
+        self.turn_label.setVisible(True)
+        self.topic_label.setVisible(True)
+        self.info_label.setVisible(True)
     
+    def reinit_widgets(self):
+        self.menu_button.setEnabled(False)
+        self.menu_button.setVisible(False)
+        # Remove widgets related to game setup
+        self.layout().addWidget(self.image_label)
+        self.layout().addWidget(self.AI_use)
+        self.layout().addWidget(self.num_rounds)
+        self.layout().addWidget(self.voice_commands)
+        self.layout().addWidget(self.family1_name_input)
+        self.layout().addWidget(self.family2_name_input)
+        self.layout().addWidget(self.start_game_button)
+
+        # Delete the widgets
+        self.family1_name_input.setVisible(True)
+        self.family2_name_input.setVisible(True)
+        self.start_game_button.setVisible(True)
+        self.AI_use.setVisible(True)
+        self.voice_commands.setVisible(True)
+        self.num_rounds.setVisible(True)
+        self.image_label.setVisible(True)
+
+        self.layout().removeWidget(self.score_label)
+        self.layout().removeWidget(self.topic_label)
+        self.layout().removeWidget(self.turn_label)
+        self.layout().removeWidget(self.info_label)
+        self.layout().removeWidget(self.board1)
+        self.layout().removeWidget(self.board2)
+        self.layout().removeWidget(self.board3)
+        self.layout().removeWidget(self.board4)
+        self.layout().removeWidget(self.board5)
+        self.layout().removeWidget(self.board6)
+        self.layout().removeWidget(self.board7)
+        self.layout().removeWidget(self.board8)
+        self.layout().removeWidget(self.board9)
+        self.layout().removeWidget(self.board10)
+
+        self.score_label.setVisible(False)
+        self.turn_label.setVisible(False)
+        self.topic_label.setVisible(False)
+        self.info_label.setVisible(False)
+
+        self.board1.clear()
+        self.board2.clear()
+        self.board3.clear()
+        self.board4.clear()
+        self.board5.clear()
+        self.board6.clear()
+        self.board7.clear()
+        self.board8.clear()
+        self.board9.clear()
+        self.board10.clear()
+
     def update_game_info(self, family1_name, family2_name, topic, round_num):
-        self.topic_label.setText(f"Topic: {topic}")
+        self.topic_label.setText(f"We asked 100 people, {topic}")
         self.turn_label.setText(f"Round: {round_num + 1}")
         self.score_label.setText(f"Current Scores:\n{family1_name}: {self.score[family1_name]}\n{family2_name}: {self.score[family2_name]}")
 
