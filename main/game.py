@@ -57,8 +57,6 @@ class FamilyFeudApp(QWidget):
         self.board6 = QLabel("", self)
         self.board7 = QLabel("", self)
         self.board8 = QLabel("", self)
-        self.board9 = QLabel("", self)
-        self.board10 = QLabel("", self)
         self.info_label = QLabel("", self)
         self.voice_commands = QCheckBox("Use voice commands?", self)
         self.voice_commands.setChecked(self.voice)
@@ -121,7 +119,7 @@ class FamilyFeudApp(QWidget):
     def run_game(self, family1_name, family2_name):
         self.remove_initial_widgets()
         current_round = 0
-        full_board = [self.board1,self.board2,self.board3,self.board4,self.board5,self.board6,self.board7,self.board8,self.board9,self.board10]
+        full_board = [self.board1,self.board2,self.board3,self.board4,self.board5,self.board6,self.board7,self.board8]
         for topic in self.rounds:
             self.update_game_info(family1_name, family2_name, topic, current_round)
 
@@ -193,8 +191,6 @@ class FamilyFeudApp(QWidget):
         self.layout().addWidget(self.board6)
         self.layout().addWidget(self.board7)
         self.layout().addWidget(self.board8)
-        self.layout().addWidget(self.board9)
-        self.layout().addWidget(self.board10)
 
         self.score_label.setVisible(True)
         self.turn_label.setVisible(True)
@@ -234,8 +230,6 @@ class FamilyFeudApp(QWidget):
         self.layout().removeWidget(self.board6)
         self.layout().removeWidget(self.board7)
         self.layout().removeWidget(self.board8)
-        self.layout().removeWidget(self.board9)
-        self.layout().removeWidget(self.board10)
 
         self.score_label.setVisible(False)
         self.turn_label.setVisible(False)
@@ -250,8 +244,6 @@ class FamilyFeudApp(QWidget):
         self.board6.clear()
         self.board7.clear()
         self.board8.clear()
-        self.board9.clear()
-        self.board10.clear()
 
     def update_game_info(self, family1_name, family2_name, topic, round_num):
         self.topic_label.setText(f"We asked 100 people, {topic}")
