@@ -1,0 +1,24 @@
+Quick Setup Instructions for Your Game with Groq AI
+
+1. Download the Game Files
+
+    Step 1: Download the game files from the github (the only official source).
+    Step 2: After downloading, right-click the ZIP file and select Extract All to unzip the contents. This will create a folder containing all the necessary game files.
+
+2. Install Groq AI Dependencies (If Needed)
+
+    Step 1: Open the folder where you unzipped the game files.
+    Step 2: Look for a file named install.sh (for macOS/Linux) or install.bat (for Windows). Double-click this file to automatically install any required dependencies.
+    Step 3: Follow any on-screen instructions to complete the installation. The setup should automatically take care of everything.
+
+    Tip: If you see an error message, make sure you have an internet connection, as the setup might need to download extra files.
+
+3. Start the Game
+
+    Step 1: Once the installation is complete, go back to the game folder.
+    Step 2: Look for the file named game.py.
+    Step 3: Run the game file.
+
+4. Play and Enjoy!
+
+    Once the game loads, you can start playing right away. Groq AI will be active in the background to help with your gaming experience.
