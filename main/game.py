@@ -7,7 +7,7 @@ from groq import Groq
 from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
 from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic
 from qwindows import FileDialog
-from sound_player import play_sound
+from sound_player import play_sound, stop_sound
 
 
 class FamilyFeudApp(QWidget):
@@ -16,6 +16,7 @@ class FamilyFeudApp(QWidget):
         self.client = Groq()
         self.AI = True
         self.voice = True
+        self.host = True
         self.initUI()
     
     def initUI(self):
@@ -55,15 +56,21 @@ class FamilyFeudApp(QWidget):
         self.board7 = QLabel("", self)
         self.board8 = QLabel("", self)
         self.info_label = QLabel("", self)
+
         self.voice_commands = QCheckBox("Use voice commands?", self)
         self.voice_commands.setChecked(self.voice)
         self.voice_commands.stateChanged.connect(self.voice_toggle)
         self.AI_use = QCheckBox("Use AI to generate questions?", self)
         self.AI_use.setChecked(self.AI)
         self.AI_use.stateChanged.connect(self.AI_toggle)
+        self.AI_host = QCheckBox("Use AI host instead of human host?", self)
+        self.AI_host.setChecked(self.host)
+        self.AI_host.stateChanged.connect(self.host_toggle)
+
         self.num_rounds = QLineEdit(self)
         self.num_rounds.setPlaceholderText("Enter number of rounds: ")
         self.menu_button = QPushButton('Back to Menu', self)
+
         self.start_game_button.clicked.connect(self.reinit_widgets)
 
         self.score_label.setVisible(False)
@@ -77,11 +84,12 @@ class FamilyFeudApp(QWidget):
         main_layout.addWidget(self.num_rounds)
         main_layout.addWidget(self.voice_commands)
         main_layout.addLayout(name_input_layout)
+        main_layout.addWidget(self.AI_host)
         main_layout.addWidget(self.start_game_button)
         
         self.setLayout(main_layout)
 
-        play_sound("sounds/themesong.mp3")
+        self.theme = play_sound("sounds/themesong.mp3")
 
     def start_game(self):
         family1_name = self.family1_name_input.text()
@@ -114,6 +122,7 @@ class FamilyFeudApp(QWidget):
         self.run_game(family1_name, family2_name)
 
     def run_game(self, family1_name, family2_name):
+        stop_sound(self.theme)
         self.remove_initial_widgets()
         current_round = 0
         full_board = [self.board1,self.board2,self.board3,self.board4,self.board5,self.board6,self.board7,self.board8]
@@ -127,17 +136,17 @@ class FamilyFeudApp(QWidget):
 
             display_board(board, visited, full_board)
 
-            family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited,self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice) 
+            family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited,self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host) 
             if family1_turn:
-                turn_score, blackout = handle_turn(family1_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice)
+                turn_score, blackout = handle_turn(family1_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host)
                 if not blackout:
-                    steal_score, board = steal(family2_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice)
+                    steal_score, board = steal(family2_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host)
                     if steal_score > 0:
                         turn_score += steal_score
             else:
-                turn_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice)
+                turn_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host)
                 if not blackout:
-                    steal_score, board = steal(family1_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice)
+                    steal_score, board = steal(family1_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host)
                     if steal_score > 0:
                         turn_score += steal_score
             
@@ -166,6 +175,7 @@ class FamilyFeudApp(QWidget):
         self.layout().removeWidget(self.AI_use)
         self.layout().removeWidget(self.voice_commands)
         self.layout().removeWidget(self.num_rounds)
+        self.layout().removeWidget(self.AI_host)
 
         # Delete the widgets
         self.family1_name_input.setVisible(False)
@@ -175,6 +185,7 @@ class FamilyFeudApp(QWidget):
         self.voice_commands.setVisible(False)
         self.num_rounds.setVisible(False)
         self.image_label.setVisible(False)
+        self.AI_host.setVisible(False)
 
         self.layout().addWidget(self.score_label)
         self.layout().addWidget(self.topic_label)
@@ -253,6 +264,9 @@ class FamilyFeudApp(QWidget):
     
     def AI_toggle(self):
         self.AI = not self.AI
+
+    def host_toggle(self):
+        self.host = not self.host
 
     def voice_toggle(self):
         self.voice = not self.voice

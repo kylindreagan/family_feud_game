@@ -1,6 +1,6 @@
 from time import sleep
 from typing import List, Dict, Tuple
-from proximityMeasures import close_enough_AI
+from proximityMeasures import check_similarity
 from SpeechtoText import speech_to_text
 from PyQt5.QtWidgets import QLabel, QApplication
 from qwindows import AnswerDialog
@@ -24,7 +24,7 @@ def display_board(board: Dict[str, int], visited: Dict[str, bool], labels: List[
         label.setText(str(idx+1)+": "+display)
         idx += 1
 
-def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, voice = True) -> Tuple[bool, int]:
+def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, voice = True, host= True) -> Tuple[bool, int]:
     if turn_label == None:
         print("The", stealing_name, "family has a chance to steal!")
     else:
@@ -53,7 +53,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         visited[answer] = True
         return board[answer], board
     else:
-        closest = close_enough_AI(answer,visited, client)
+        closest =check_similarity(host, answer, visited, client)
         if closest == "null":
             if info_label == None:
                 print("WRONG!")
@@ -73,7 +73,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         visited[closest] = True
         return board[closest], board
     
-def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=False) -> Tuple[bool, int, Dict[str, bool]]:
+def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=False, host=True) -> Tuple[bool, int, Dict[str, bool]]:
     turn = 1
     chances = 0
     points_gained = False
@@ -110,7 +110,7 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
             visited[answer] = True
             points_gained = True
         else:
-            closest = close_enough_AI(answer, visited, client)
+            closest = check_similarity(host, answer, visited, client)
             if closest == "null":
                 if info_label == None:
                     print("WRONG!")
@@ -139,7 +139,7 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
     winner = name1 if family_points[name1] >= family_points[name2] else name2
     return winner == name1, sum(family_points.values()), visited
 
-def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], guesses: int, client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=True) -> Tuple[int, bool]:
+def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], guesses: int, client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=True, host=True) -> Tuple[int, bool]:
     turn_score = 0
     while guesses > 0:
         if turn_label != None:
@@ -169,7 +169,7 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
             turn_score += board[answer]
             visited[answer] = True
         else:
-            closest = close_enough_AI(answer, visited, client)
+            closest = check_similarity(host, answer, visited, client)
             if closest == "null":
                 if info_label == None:
                     print("WRONG!")

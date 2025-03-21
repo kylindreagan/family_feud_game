@@ -1,8 +1,28 @@
 from difflib import get_close_matches
 from typing import List, Dict, Tuple
+from qwindows import HostDialog
 
-def close_enough_AI(answer:str, visited: Dict[str, bool], model_client) -> str:
+def check_similarity(AI, answer, visited, client):
     unvisited = [x for x in visited if visited[x] != True]
+    first_chance = close_enough(answer, unvisited)
+    if first_chance == "null":
+        if AI:
+            return close_enough_AI(answer, unvisited, client)
+        else:
+            return close_enough(answer, unvisited)
+    else: return first_chance
+
+def close_enough(answer, unvisited):
+    while True:
+        dialog = HostDialog()
+        dialog.exec_()  # This will block until the dialog is closed
+        choice = dialog.get_data()
+        if (not choice.isnumeric() and choice != "null") or choice >= len(unvisited) or unvisited[choice] != True:
+            print("INVALID")
+        else:
+            return choice
+
+def close_enough_AI(answer:str, unvisited: Dict[str, bool], model_client) -> str:
     possible = " ".join(unvisited)
     sent_message = f"ANSWER: {answer} POSSIBLE: {possible}"
     chat_completion = model_client.chat.completions.create(

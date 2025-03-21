@@ -1,5 +1,5 @@
 # family_feud_game
-Family Feud Game by Kylind Reagan
+A Family Feud game with optional AI integration.
 
 This is a fan project with no ties to Family Feud or Fremantle
 
