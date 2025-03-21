@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox
 from time import sleep
 from groq import Groq
 from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
@@ -59,6 +59,10 @@ class FamilyFeudApp(QWidget):
         self.num_rounds = QLineEdit(self)
         self.num_rounds.setPlaceholderText("Enter number of rounds: ")
 
+        self.answer_input = QLineEdit(self)
+        self.answer_input.setPlaceholderText("Enter your answer here")
+        self.answer_input.setEnabled(False)
+
         # Add widgets to the layout
         main_layout.addWidget(self.AI_use)
         main_layout.addWidget(self.num_rounds)
@@ -79,11 +83,13 @@ class FamilyFeudApp(QWidget):
         main_layout.addWidget(self.board8)
         main_layout.addWidget(self.board9)
         main_layout.addWidget(self.board10)
+        main_layout.addWidget(self.answer_input)
         
-
         self.setLayout(main_layout)
 
     def start_game(self):
+        self.answer_input.setEnabled(not self.voice_commands)
+
         # Initialize game logic
         family1_name = self.family1_name_input.text()
         family2_name = self.family2_name_input.text()
@@ -121,17 +127,17 @@ class FamilyFeudApp(QWidget):
 
             display_board(board, visited, full_board)
 
-            family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited,self.client, self.topic_label, self.turn_label, self.info_label, full_board) 
+            family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited,self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice_commands) 
             if family1_turn:
-                turn_score, blackout = handle_turn(family1_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board)
+                turn_score, blackout = handle_turn(family1_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice_commands)
                 if not blackout:
-                    steal_score, board = steal(family2_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label)
+                    steal_score, board = steal(family2_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice_commands)
                     if steal_score > 0:
                         turn_score += steal_score
             else:
-                turn_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board)
+                turn_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice_commands)
                 if not blackout:
-                    steal_score, board = steal(family1_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label)
+                    steal_score, board = steal(family1_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice_commands)
                     if steal_score > 0:
                         turn_score += steal_score
             

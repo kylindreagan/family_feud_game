@@ -22,13 +22,16 @@ def display_board(board: Dict[str, int], visited: Dict[str, bool], labels: List[
         label.setText(str(idx+1)+": "+display)
         idx += 1
 
-def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, board_label=None) -> Tuple[bool, int]:
+def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, voice = True, answer_label=None) -> Tuple[bool, int]:
     if turn_label == None:
         print("The", stealing_name, "family has a chance to steal!")
     else:
         turn_label.setText("The "+ stealing_name+ " family has a chance to steal!")
     sleep(2)
-    answer = speech_to_text(topic, topic_label, info_label)
+    if voice:
+        answer = speech_to_text(topic, topic_label, info_label)
+    else:
+        answer = answer_label.getText()
     if info_label == None:
         print("Survey Says!")
     else:
@@ -63,7 +66,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         visited[closest] = True
         return board[closest], board
     
-def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, board_label=None) -> Tuple[bool, int, Dict[str, bool]]:
+def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=False, answer_label=None) -> Tuple[bool, int, Dict[str, bool]]:
     turn = 1
     chances = 0
     points_gained = False
@@ -76,7 +79,10 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
         else:
             turn_label.setText(f"It's the {current_family} family's turn.")
             QApplication.processEvents()
-        answer = speech_to_text(topic, topic_label, info_label)
+        if voice:
+            answer = speech_to_text(topic, topic_label, info_label)
+        else:
+            answer=answer_label.getText()
         if info_label == None:
             print("Survey Says!")
         else:
