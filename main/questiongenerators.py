@@ -1,5 +1,6 @@
 from typing import List, Dict, Tuple
 from groq import Groq
+from qwindows import InputDialog
 
 PROMPT_TEMPLATE = (
     "You are an AI tasked with generating family feud-style questions. "
@@ -16,7 +17,7 @@ def questions_from_file(num_topics:int=1, filepath:str="games/answers.txt"):
         with open(filepath, "r") as file:
             for i in range(num_topics):
                 topic_line = file.readline().strip("\n")
-                if not line or len(line) < 2 or not line[-1].isdigit():
+                if not topic_line or len(topic_line) < 2 or not topic_line[-1].isdigit():
                     raise ValueError("Malformed topic line.")
                 topic = topic_line[:-1]
                 num_questions = int(topic_line[-1])
@@ -74,7 +75,7 @@ def questions_from_AI(num_topics:int, client):
             )
     return total_topics
 
-def questions_from_topic(num_topics:int, client):
+def questions_from_topic(num_topics:int, client, game=False):
     total_topics = {}
     log=[
             {
@@ -83,11 +84,18 @@ def questions_from_topic(num_topics:int, client):
             }
         ]
     for i in range(num_topics):
-        topic = input("Enter a topic for question "+str(i+1)+": ")
+        if not game:
+            topic = input("Enter a topic for question "+str(i+1)+": ")
+        else:
+            dialog = InputDialog()
+            dialog.exec_()  # This will block until the dialog is closed
+            topic = dialog.get_data()
+        
         log.append({
                 "role": "user",
                 "content": "Generate a question on topic "+topic,
             })
+        
         chat_completion = client.chat.completions.create(
         messages=log,
         model="llama3-8b-8192",
@@ -98,7 +106,6 @@ def questions_from_topic(num_topics:int, client):
         "content": chat_completion.choices[0].message.content
         })
         response = [x.split() for x in chat_completion.choices[0].message.content.split("\n") if x != '']
-        print(response)
         question = " ".join(response[0])
         total_ans = {}
         on_topic = True

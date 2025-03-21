@@ -1,20 +1,43 @@
 import speech_recognition as sr
+from PyQt5.QtWidgets import QLabel, QApplication
+from time import sleep
 
-def speech_to_text(topic:str) -> str:
+def speech_to_text(topic:str, topic_label=None, info_label=None) -> str:
     while True:
         recognizer = sr.Recognizer()
-        print(f"We asked 100 people: {topic}")
+        if topic_label == None:
+            print(f"We asked 100 people: {topic}")
+        else:
+            topic_label.setText(f"We asked 100 people: {topic}")
+            QApplication.processEvents()
         with sr.Microphone(sample_rate=48000, chunk_size=2048) as source:
-                print("Speak something...")
+                if info_label == None:
+                    print("Speak something...")
+                else:
+                    info_label.setText("Speak something...")
+                    QApplication.processEvents()
                 audio_data = recognizer.listen(source, phrase_time_limit=5)
         try:
             #Google's Speech Recognition for regular recognition
             text = recognizer.recognize_google(audio_data).lower()
-            print("You said:", text)
+            if info_label == None:
+                print("You said:", text)
+            else:
+                info_label.setText("You said: "+text)
+                QApplication.processEvents()
+                sleep(.5)
             return text
         except sr.UnknownValueError:
-            print("Sorry, could not understand audio. Please speak clearer")
-            continue
+            if info_label == None:
+                print("Sorry, could not understand audio. Please speak clearer")
+                continue
+            else:
+                info_label.setText("Sorry, could not understand audio. Please speak clearer")
+                QApplication.processEvents()
+                sleep(.5)
+                continue
+
+
         except sr.RequestError as e:
             print("Error: Could not request results from Google Speech Recognition service")
             continue

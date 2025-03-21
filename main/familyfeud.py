@@ -55,5 +55,3 @@ def main():
 
     print(f"Final Scores:\n{family1_name}: {score[family1_name]}\n{family2_name}: {score[family2_name]}")
 
-if __name__ == "__main__":
-    main()
