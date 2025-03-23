@@ -53,7 +53,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         visited[answer] = True
         return board[answer], board
     else:
-        closest =check_similarity(host, answer, visited, client)
+        closest = check_similarity(host, answer, visited, client)
         if closest == "null":
             if info_label == None:
                 print("WRONG!")

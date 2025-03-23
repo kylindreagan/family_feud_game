@@ -6,9 +6,16 @@ from time import sleep
 from groq import Groq
 from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
 from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic
-from qwindows import FileDialog
+from qwindows import FileDialog, EmailDialog
 from sound_player import play_sound, stop_sound
+import re
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
+#Fill these in with your own email, potential way around this in the works.
+SENDER_EMAIL = None
+SENDER_PASSWORD = None
 
 class FamilyFeudApp(QWidget):
     def __init__(self):
@@ -17,6 +24,7 @@ class FamilyFeudApp(QWidget):
         self.AI = True
         self.voice = True
         self.host = True
+        self.email = None
         self.initUI()
     
     def initUI(self):
@@ -92,6 +100,12 @@ class FamilyFeudApp(QWidget):
         self.theme = play_sound("sounds/themesong.mp3")
 
     def start_game(self):
+        if not self.host:
+            dialog = EmailDialog()
+            dialog.exec_()  # This will block until the dialog is closed
+            email = dialog.get_data()
+            if re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email)  != None:
+                self.email = email
         family1_name = self.family1_name_input.text()
         family2_name = self.family2_name_input.text()
 
@@ -127,6 +141,13 @@ class FamilyFeudApp(QWidget):
         current_round = 0
         full_board = [self.board1,self.board2,self.board3,self.board4,self.board5,self.board6,self.board7,self.board8]
         for topic in self.rounds:
+            if self.email != None:
+                body = ""
+                for idx, (answer, points) in enumerate(board.items(), start=1):
+                    display = f"{idx}:{answer} {points} \n"
+                    body.join(display)
+                self.send_email(self.email, f"Family Feud Round {current_round+1}", body, "smtp.gmail.com", 465, SENDER_EMAIL, SENDER_PASSWORD)
+            
             self.update_game_info(family1_name, family2_name, topic, current_round)
 
             board = self.rounds[topic]
@@ -270,6 +291,33 @@ class FamilyFeudApp(QWidget):
 
     def voice_toggle(self):
         self.voice = not self.voice
+    
+    def send_email(self, to_email, subject, body, smtp_server, smtp_port, sender_email, sender_password):
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()  # Use TLS to secure the connection
+            server.login(sender_email, sender_password)
+
+            # Prepare the email
+            msg = MIMEMultipart()
+            msg['From'] = sender_email
+            msg['To'] = to_email
+            msg['Subject'] = subject
+
+            msg.attach(MIMEText(body, 'plain'))
+
+            # Send the email
+            server.sendmail(sender_email, to_email, msg.as_string())
+
+            print("Email sent successfully!")
+
+        except Exception as e:
+            print(f"Error: {e}")
+
+        finally:
+            server.quit()
+
 
 def main():
     app = QApplication(sys.argv)
