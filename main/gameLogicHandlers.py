@@ -24,18 +24,23 @@ def display_board(board: Dict[str, int], visited: Dict[str, bool], labels: List[
         label.setText(str(idx+1)+": "+display)
         idx += 1
 
-def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, voice = True, host= True) -> Tuple[bool, int]:
+def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, voice = True, host= True, family_guise=None) -> Tuple[bool, int]:
     if turn_label == None:
         print("The", stealing_name, "family has a chance to steal!")
     else:
         turn_label.setText("The "+ stealing_name+ " family has a chance to steal!")
     sleep(2)
-    if voice:
-        answer = speech_to_text(topic, topic_label, info_label)
+    
+    if family_guise == None:
+        if voice:
+            answer = speech_to_text(topic, topic_label, info_label)
+        else:
+            dialog = AnswerDialog()
+            dialog.exec_()  # This will block until the dialog is closed
+            answer = dialog.get_data()
     else:
-        dialog = AnswerDialog()
-        dialog.exec_()  # This will block until the dialog is closed
-        answer = dialog.get_data()
+        answer = family_guise.get_answer(board, topic)
+    
     if info_label == None:
         print("Survey Says!")
     else:
@@ -73,7 +78,7 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         visited[closest] = True
         return board[closest], board
     
-def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=False, host=True) -> Tuple[bool, int, Dict[str, bool]]:
+def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=False, host=True, family1_guise=None, family2_guise=None) -> Tuple[bool, int, Dict[str, bool]]:
     turn = 1
     chances = 0
     points_gained = False
@@ -86,12 +91,19 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
         else:
             turn_label.setText(f"It's the {current_family} family's turn.")
             QApplication.processEvents()
-        if voice:
-            answer = speech_to_text(topic, topic_label, info_label)
+        
+        if current_family == name1 and family1_guise != None:
+            answer = family1_guise.get_answer(board, topic)
+        elif current_family == name2 and family2_guise != None:
+            answer = family2_guise.get_answer(board, topic)
         else:
-            dialog = AnswerDialog()
-            dialog.exec_()  # This will block until the dialog is closed
-            answer = dialog.get_data()
+            if voice:
+                answer = speech_to_text(topic, topic_label, info_label)
+            else:
+                dialog = AnswerDialog()
+                dialog.exec_()  # This will block until the dialog is closed
+                answer = dialog.get_data()
+        
         if info_label == None:
             print("Survey Says!")
         else:
@@ -117,6 +129,10 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
                 else:
                     info_label.setText("WRONG!")
                     QApplication.processEvents()
+                if current_family != name1 and family1_guise != None:
+                    family1_guise.add_wrong_answer(answer)
+                elif current_family != name2 and family2_guise != None:
+                    family2_guise.add_wrong_answer(answer)
                 play_sound("sounds/wrong.wav")
             else:
                 if info_label == None:
@@ -128,6 +144,7 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
                 family_points[current_family] += board[closest]
                 visited[closest] = True
                 points_gained = True
+        
         if board_label == None:
             print_board(board, visited)
         else:
@@ -139,7 +156,7 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
     winner = name1 if family_points[name1] >= family_points[name2] else name2
     return winner == name1, sum(family_points.values()), visited
 
-def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], guesses: int, client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=True, host=True) -> Tuple[int, bool]:
+def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Dict[str, bool], guesses: int, client, topic_label=None, turn_label=None, info_label=None, board_label=None, voice=True, host=True, family_guise=None, opposite_guise=None) -> Tuple[int, bool]:
     turn_score = 0
     while guesses > 0:
         if turn_label != None:
@@ -147,18 +164,24 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
             QApplication.processEvents()
         else:
             print(f"It's the {family_name} family's turn. You have {guesses} guesses remaining.")
-        if voice:
-            answer = speech_to_text(topic, topic_label, info_label)
+        
+        if family_guise != None:
+            answer = family_guise.get_answer(board, topic)
         else:
-            dialog = AnswerDialog()
-            dialog.exec_()  # This will block until the dialog is closed
-            answer = dialog.get_data()
+            if voice:
+                answer = speech_to_text(topic, topic_label, info_label)
+            else:
+                dialog = AnswerDialog()
+                dialog.exec_()  # This will block until the dialog is closed
+                answer = dialog.get_data()
+        
         if info_label == None:
             print("Survey Says!")
         else:
             info_label.setText("Survey Says!")
             QApplication.processEvents()
         sleep(1)
+        
         if answer in board and not visited[answer]:
             if info_label == None:
                 print("CORRECT!")
@@ -176,6 +199,8 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
                 else:
                     info_label.setText("WRONG!")
                     QApplication.processEvents()
+                if opposite_guise != None:
+                    opposite_guise.add_wrong_answer(answer)
                 guesses -= 1
                 play_sound("sounds/wrong.wav")
             else:

@@ -12,6 +12,7 @@ import re
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from AIFamily import Family_Guise
 
 #Fill these in with your own email, potential way around this in the works.
 SENDER_EMAIL = None
@@ -25,6 +26,8 @@ class FamilyFeudApp(QWidget):
         self.voice = True
         self.host = True
         self.email = None
+        self.family1 = False
+        self.family2 = False
         self.initUI()
     
     def initUI(self):
@@ -37,10 +40,18 @@ class FamilyFeudApp(QWidget):
         self.family1_name_input.setPlaceholderText("Family 1 - Enter your name")
         self.family2_name_input = QLineEdit(self)
         self.family2_name_input.setPlaceholderText("Family 2 - Enter your name")
+        self.AI_family1 = QCheckBox("Have family 1 be AI?")
+        self.AI_family1.setChecked(self.family1)
+        self.AI_family1.stateChanged.connect(self.family1_toggle)
+        self.AI_family2 = QCheckBox("Have family 2 be AI?")
+        self.AI_family2.setChecked(self.family2)
+        self.AI_family2.stateChanged.connect(self.family2_toggle)
 
         name_input_layout = QVBoxLayout()
         name_input_layout.addWidget(self.family1_name_input)
+        name_input_layout.addWidget(self.AI_family1)
         name_input_layout.addWidget(self.family2_name_input)
+        name_input_layout.addWidget(self.AI_family2)
 
         self.start_game_button = QPushButton('Start Game', self)
         self.start_game_button.clicked.connect(self.start_game)
@@ -133,9 +144,19 @@ class FamilyFeudApp(QWidget):
                 rounds = questions_from_file(num_rounds)
         self.rounds = rounds
 
-        self.run_game(family1_name, family2_name)
+        family1_guise = None
+        family2_guise = None
 
-    def run_game(self, family1_name, family2_name):
+        if self.family1:
+            family1_guise = Family_Guise(self.client)
+        
+        if self.family2:
+            family2_guise = Family_Guise(self.client)
+
+
+        self.run_game(family1_name, family2_name, family1_guise, family2_guise)
+
+    def run_game(self, family1_name, family2_name, family1_guise, family2_guise):
         stop_sound(self.theme)
         self.remove_initial_widgets()
         current_round = 0
@@ -157,17 +178,17 @@ class FamilyFeudApp(QWidget):
 
             display_board(board, visited, full_board)
 
-            family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited,self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host) 
+            family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited,self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family1_guise, family2_guise) 
             if family1_turn:
-                turn_score, blackout = handle_turn(family1_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host)
+                turn_score, blackout = handle_turn(family1_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family1_guise, family2_guise)
                 if not blackout:
-                    steal_score, board = steal(family2_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host)
+                    steal_score, board = steal(family2_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host, family2_guise)
                     if steal_score > 0:
                         turn_score += steal_score
             else:
-                turn_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host)
+                turn_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family2_guise, family1_guise)
                 if not blackout:
-                    steal_score, board = steal(family1_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host)
+                    steal_score, board = steal(family1_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host, family1_guise)
                     if steal_score > 0:
                         turn_score += steal_score
             
@@ -197,6 +218,8 @@ class FamilyFeudApp(QWidget):
         self.layout().removeWidget(self.voice_commands)
         self.layout().removeWidget(self.num_rounds)
         self.layout().removeWidget(self.AI_host)
+        self.layout().removeWidget(self.AI_family1)
+        self.layout().removeWidget(self.AI_family2)
 
         # Delete the widgets
         self.family1_name_input.setVisible(False)
@@ -207,6 +230,8 @@ class FamilyFeudApp(QWidget):
         self.num_rounds.setVisible(False)
         self.image_label.setVisible(False)
         self.AI_host.setVisible(False)
+        self.AI_family1.setVisible(False)
+        self.AI_family2.setVisible(False)
 
         self.layout().addWidget(self.score_label)
         self.layout().addWidget(self.topic_label)
@@ -235,7 +260,10 @@ class FamilyFeudApp(QWidget):
         self.layout().addWidget(self.num_rounds)
         self.layout().addWidget(self.voice_commands)
         self.layout().addWidget(self.family1_name_input)
+        self.layout().addWidget(self.AI_family1)
         self.layout().addWidget(self.family2_name_input)
+        self.layout().addWidget(self.AI_family2)
+        self.layout().addWidget(self.AI_host)
         self.layout().addWidget(self.start_game_button)
 
         # Delete the widgets
@@ -246,6 +274,8 @@ class FamilyFeudApp(QWidget):
         self.voice_commands.setVisible(True)
         self.num_rounds.setVisible(True)
         self.image_label.setVisible(True)
+        self.AI_family1.setVisible(True)
+        self.AI_family2.setVisible(True)
 
         self.layout().removeWidget(self.score_label)
         self.layout().removeWidget(self.topic_label)
@@ -291,6 +321,12 @@ class FamilyFeudApp(QWidget):
 
     def voice_toggle(self):
         self.voice = not self.voice
+    
+    def family1_toggle(self):
+        self.family1 = not self.family1
+    
+    def family2_toggle(self):
+        self.family2 = not self.family2
     
     def send_email(self, to_email, subject, body, smtp_server, smtp_port, sender_email, sender_password):
         server = smtplib.SMTP(smtp_server, smtp_port)
