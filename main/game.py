@@ -6,7 +6,7 @@ from time import sleep
 from groq import Groq
 from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
 from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic
-from qwindows import FileDialog, EmailDialog
+from qwindows import FileDialog, EmailDialog, ContinueDialog
 from sound_player import play_sound, stop_sound
 import re
 import smtplib
@@ -15,7 +15,7 @@ from email.mime.multipart import MIMEMultipart
 from AIFamily import Family_Guise
 
 #Fill these in with your own email, potential way around this in the works.
-SENDER_EMAIL = None
+SENDER_EMAIL =  None
 SENDER_PASSWORD = None
 
 class FamilyFeudApp(QWidget):
@@ -162,19 +162,24 @@ class FamilyFeudApp(QWidget):
         current_round = 0
         full_board = [self.board1,self.board2,self.board3,self.board4,self.board5,self.board6,self.board7,self.board8]
         for topic in self.rounds:
+
+            self.clear_board()
+                       
+            self.update_game_info(family1_name, family2_name, topic, current_round)
+
+            board = self.rounds[topic]
+
             if self.email != None:
-                body = ""
+                body = "" 
                 for idx, (answer, points) in enumerate(board.items(), start=1):
                     display = f"{idx}:{answer} {points} \n"
                     body.join(display)
                 self.send_email(self.email, f"Family Feud Round {current_round+1}", body, "smtp.gmail.com", 465, SENDER_EMAIL, SENDER_PASSWORD)
-            
-            self.update_game_info(family1_name, family2_name, topic, current_round)
 
-            board = self.rounds[topic]
             blackout = False
             visited = {i: False for i in board}
             turn_score = 0
+            is_steal = False
 
             display_board(board, visited, full_board)
 
@@ -185,16 +190,22 @@ class FamilyFeudApp(QWidget):
                     steal_score, board = steal(family2_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host, family2_guise)
                     if steal_score > 0:
                         turn_score += steal_score
+                        is_steal = True
             else:
                 turn_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family2_guise, family1_guise)
                 if not blackout:
                     steal_score, board = steal(family1_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host, family1_guise)
                     if steal_score > 0:
                         turn_score += steal_score
+                        is_steal = True
             
             # Update scores
-            self.score[family1_name] += turn_score if family1_turn else 0
-            self.score[family2_name] += turn_score if not family1_turn else 0
+            if not is_steal:
+                self.score[family1_name] += turn_score if family1_turn else 0
+                self.score[family2_name] += turn_score if not family1_turn else 0
+            else:
+                self.score[family2_name] += turn_score if family1_turn else 0
+                self.score[family1_name] += turn_score if not family1_turn else 0
             display_board(board, visited, full_board, True)
             sleep(2)
 
@@ -203,10 +214,11 @@ class FamilyFeudApp(QWidget):
 
             # Update the UI with new scores
             self.update_game_info(family1_name, family2_name, topic, current_round)
+            dialog = ContinueDialog()
+            dialog.exec_()  # This will block until the dialog is closed
+
 
         self.final_scores(family1_name, family2_name)
-        self.menu_button.setEnabled(True)
-        self.menu_button.setVisible(True)
         
     def remove_initial_widgets(self):
         # Remove widgets related to game setup
@@ -295,6 +307,16 @@ class FamilyFeudApp(QWidget):
         self.topic_label.setVisible(False)
         self.info_label.setVisible(False)
 
+        self.board1.clear()
+        self.board2.clear()
+        self.board3.clear()
+        self.board4.clear()
+        self.board5.clear()
+        self.board6.clear()
+        self.board7.clear()
+        self.board8.clear()
+    
+    def clear_board(self):
         self.board1.clear()
         self.board2.clear()
         self.board3.clear()

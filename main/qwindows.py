@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QPushButton, QComboBox
+from typing import List
 
 class QuestionDialog(QDialog):
     def __init__(self):
@@ -72,6 +73,42 @@ class FileDialog(QDialog):
     def get_data(self):
         return self.returned_data
 
+class BluetoothDialog(QDialog):
+    def __init__(self, devices: List[str]):
+        super().__init__()
+
+        self.setWindowTitle("Find Host")
+
+        # Layout for the dialog
+        self.layout = QFormLayout()
+
+        # Create input fields (QLineEdit)
+        self.cbox = QComboBox(self)
+        self.cbox.addItem("None")
+        self.cbox.addItems(devices)
+
+        # Create submit button
+        self.submit_button = QPushButton("Submit", self)
+        self.submit_button.clicked.connect(self.on_submit)
+
+        # Add widgets to the layout
+        self.layout.addRow("Select a Host:", self.cbox)
+        self.layout.addRow(self.submit_button)
+        # Set the dialog's layout
+        self.setLayout(self.layout)
+
+        self.returned_data = None
+    
+    def on_submit(self):
+        # Get the text input from the fields
+        input1_value = self.cbox.currentText()
+        self.returned_data =  input1_value
+        # Close the dialog
+        self.accept()
+    
+    def get_data(self):
+        return self.returned_data
+
 class AnswerDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -107,6 +144,27 @@ class AnswerDialog(QDialog):
     
     def get_data(self):
         return self.returned_data
+
+class ContinueDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Continue")
+
+        # Layout for the dialog
+        self.layout = QFormLayout()
+
+        self.submit_button = QPushButton("Continue", self)
+        self.submit_button.clicked.connect(self.on_submit)
+
+        self.submit_button.clicked.connect(self.on_submit)
+
+        self.layout.addRow(self.submit_button)
+        # Set the dialog's layout
+        self.setLayout(self.layout)
+    
+    def on_submit(self):
+        self.accept()
 
 class HostDialog(QDialog):
     def __init__(self, answer):
