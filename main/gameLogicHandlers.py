@@ -40,6 +40,10 @@ def display_fm_board(round: Dict[str, int], labels: List[QLabel]):
         play_sound("sounds/surveysays.mp3")
         display = f"{answer} {points}"
         label.setText(str(idx+1)+": "+display)
+        if points == 0:
+            play_sound("sounds/fmwrong.mp3")
+        else:
+            play_sound("sounds/fmcorrect.mp3")
         QApplication.processEvents()
         sleep(2)
         
