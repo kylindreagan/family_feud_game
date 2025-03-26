@@ -6,7 +6,7 @@ from time import sleep
 from groq import Groq
 from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
 from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic
-from qwindows import FileDialog, EmailDialog, ContinueDialog
+from qwindows import FileDialog, EmailDialog, ContinueDialog, ErrorDialog
 from sound_player import play_sound, stop_sound
 import re
 import smtplib
@@ -28,6 +28,7 @@ class FamilyFeudApp(QWidget):
         self.email = None
         self.family1 = False
         self.family2 = False
+        self.multiplier = 1
         self.initUI()
     
     def initUI(self):
@@ -66,6 +67,7 @@ class FamilyFeudApp(QWidget):
         self.score_label = QLabel("Current Scores:\nFamily 1: 0\nFamily 2: 0", self)
         self.topic_label = QLabel("Topic: None", self)
         self.turn_label = QLabel("Turn: None", self)
+        self.mult_label = QLabel("", self)
         self.board1 = QLabel("", self)
         self.board2 = QLabel("", self)
         self.board3 = QLabel("", self)
@@ -126,22 +128,24 @@ class FamilyFeudApp(QWidget):
         
         self.score = {family1_name: 0, family2_name: 0}
 
-        num_rounds = self.num_rounds.text()
-        if not num_rounds.isnumeric():
-            num_rounds = 1
+        n = self.num_rounds.text()
+        if not n.isnumeric():
+            n = 1
         else:
-            num_rounds = int(num_rounds)
+            n = int(n)
+            if n < 1:
+                n = 1
 
         if self.AI:
-            rounds = questions_from_topic(num_rounds, self.client, True)
+            rounds = questions_from_topic(n, self.client, True)
         else:
             dialog = FileDialog()
             dialog.exec_()  # This will block until the dialog is closed
             file_name = dialog.get_data()
             try:
-                rounds = questions_from_file(num_rounds, "games/"+file_name+".txt")
+                rounds = questions_from_file(n, "games/"+file_name+".txt")
             except Exception:
-                rounds = questions_from_file(num_rounds)
+                rounds = questions_from_file(n)
         self.rounds = rounds
 
         family1_guise = None
@@ -161,13 +165,25 @@ class FamilyFeudApp(QWidget):
         self.remove_initial_widgets()
         current_round = 0
         full_board = [self.board1,self.board2,self.board3,self.board4,self.board5,self.board6,self.board7,self.board8]
+        
         for topic in self.rounds:
+            if self.multiplier == 2:
+                self.mult_label.setText("DOUBLE")
+            elif self.multiplier == 3:
+                self.mult_label.setText("TRIPLE")
+            elif self.multiplier != 1:
+                self.mult_label.setText(f"{self.multiplier}x ROUND")
 
             self.clear_board()
                        
             self.update_game_info(family1_name, family2_name, topic, current_round)
 
             board = self.rounds[topic]
+
+            if len(board) == 0:
+                dialog = ErrorDialog()
+                dialog.exec_()  # This will block until the dialog is closed
+                continue
 
             if self.email != None:
                 body = "" 
@@ -199,6 +215,7 @@ class FamilyFeudApp(QWidget):
                         turn_score += steal_score
                         is_steal = True
             
+            turn_score *= self.multiplier
             # Update scores
             if not is_steal:
                 self.score[family1_name] += turn_score if family1_turn else 0
@@ -210,12 +227,20 @@ class FamilyFeudApp(QWidget):
             sleep(2)
 
             current_round += 1
+            if current_round >= int(self.num_rounds.text())-2:
+                self.multiplier += 1
             sleep(.25)
 
             # Update the UI with new scores
             self.update_game_info(family1_name, family2_name, topic, current_round)
             dialog = ContinueDialog()
             dialog.exec_()  # This will block until the dialog is closed
+
+            if self.family1:
+                family1_guise.clear_memory()
+            
+            if self.family2:
+                family2_guise.clear_memory()
 
 
         self.final_scores(family1_name, family2_name)
@@ -245,6 +270,7 @@ class FamilyFeudApp(QWidget):
         self.AI_family1.setVisible(False)
         self.AI_family2.setVisible(False)
 
+        self.layout().addWidget(self.mult_label)
         self.layout().addWidget(self.score_label)
         self.layout().addWidget(self.topic_label)
         self.layout().addWidget(self.turn_label)
@@ -286,6 +312,7 @@ class FamilyFeudApp(QWidget):
         self.voice_commands.setVisible(True)
         self.num_rounds.setVisible(True)
         self.image_label.setVisible(True)
+        self.AI_host.setVisible(True)
         self.AI_family1.setVisible(True)
         self.AI_family2.setVisible(True)
 
@@ -301,6 +328,7 @@ class FamilyFeudApp(QWidget):
         self.layout().removeWidget(self.board6)
         self.layout().removeWidget(self.board7)
         self.layout().removeWidget(self.board8)
+        self.layout().removeWidget(self.mult_label)
 
         self.score_label.setVisible(False)
         self.turn_label.setVisible(False)
@@ -315,6 +343,7 @@ class FamilyFeudApp(QWidget):
         self.board6.clear()
         self.board7.clear()
         self.board8.clear()
+        self.mult_label.clear()
     
     def clear_board(self):
         self.board1.clear()

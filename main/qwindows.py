@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QPushButton, QComboBox
+from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QPushButton, QComboBox, QLabel
 from typing import List
 
 class QuestionDialog(QDialog):
@@ -161,6 +161,28 @@ class ContinueDialog(QDialog):
 
         self.layout.addRow(self.submit_button)
         # Set the dialog's layout
+        self.setLayout(self.layout)
+    
+    def on_submit(self):
+        self.accept()
+
+class ErrorDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Continue")
+
+        self.layout = QFormLayout()
+
+        self.submit_button = QPushButton("Continue", self)
+        self.submit_button.clicked.connect(self.on_submit)
+
+        self.error_label = QLabel("Error in Question Generation", self)
+
+        self.submit_button.clicked.connect(self.on_submit)
+        
+        self.layout.addRow(self.error_label)
+        self.layout.addRow(self.submit_button)
         self.setLayout(self.layout)
     
     def on_submit(self):

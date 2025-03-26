@@ -42,3 +42,11 @@ class Family_Guise:
                 "role": "user",
                 "content": sent_message,
             })
+    
+    def clear_memory(self):
+        self.log=[
+            {
+            "role": "system", 
+            "content": PROMPT_TEMPLATE,
+             },
+        ]
