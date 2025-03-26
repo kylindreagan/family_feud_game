@@ -202,14 +202,16 @@ class FamilyFeudApp(QWidget):
 
             family1_turn, turn_score, visited = decide_turn(family1_name,family2_name,topic,board,visited,self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family1_guise, family2_guise) 
             if family1_turn:
-                turn_score, blackout = handle_turn(family1_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family1_guise, family2_guise)
+                temp_score, blackout = handle_turn(family1_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family1_guise, family2_guise)
+                turn_score += temp_score
                 if not blackout:
                     steal_score, board = steal(family2_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host, family2_guise)
                     if steal_score > 0:
                         turn_score += steal_score
                         is_steal = True
             else:
-                turn_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family2_guise, family1_guise)
+                temp_score, blackout = handle_turn(family2_name, topic, board, visited, 3, self.client, self.topic_label, self.turn_label, self.info_label, full_board, self.voice, self.host, family2_guise, family1_guise)
+                turn_score += temp_score
                 if not blackout:
                     steal_score, board = steal(family1_name, topic, board, visited, self.client, self.topic_label, self.turn_label, self.info_label, self.voice, self.host, family1_guise)
                     if steal_score > 0:
