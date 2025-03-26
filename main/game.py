@@ -234,6 +234,7 @@ class FamilyFeudApp(QWidget):
 
             # Update the UI with new scores
             self.update_game_info(family1_name, family2_name, topic, current_round)
+            play_sound("sounds/roundend.mp3")
             dialog = ContinueDialog()
             dialog.exec_()  # This will block until the dialog is closed
 
@@ -274,8 +275,12 @@ class FamilyFeudApp(QWidget):
             dialog.exec_()  # This will block until the dialog is closed
 
             y = sum(second_round.values())
-            self.score_label.setText(f"{family1_name}:{x+y}")
             display_fm_board(second_round, self.fmboardB)
+            self.score_label.setText(f"{family1_name}:{x+y}")
+            
+            if x+y >= 200:
+                play_sound("sounds/win.mp3")
+            
             dialog = ContinueDialog()
             dialog.exec_()  # This will block until the dialog is closed
 
