@@ -31,14 +31,18 @@ def display_fm_board(round: Dict[str, int], labels: List[QLabel]):
         label = labels[idx]
         
         # Display answer and points if it's visited or if reveal is True
-        display = f"{answer} {points}"
-        
-        # Set the label text
-        play_sound("sounds/surveysays.mp3")
-        sleep(2)
+        play_sound("sounds/fmding.mp3")
+        display = f"{answer} ###"
         label.setText(str(idx+1)+": "+display)
         QApplication.processEvents()
-        play_sound("sounds/fmding.mp3")
+        sleep(3)
+        # Set the label text
+        play_sound("sounds/surveysays.mp3")
+        display = f"{answer} {points}"
+        label.setText(str(idx+1)+": "+display)
+        QApplication.processEvents()
+        sleep(2)
+        
         sleep(1)
         idx += 1
 
