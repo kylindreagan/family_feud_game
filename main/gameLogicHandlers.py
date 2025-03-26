@@ -136,6 +136,14 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
             else:
                 info_label.setText("CORRECT!")
                 QApplication.processEvents()
+            if current_family != name1 and family1_guise != None:
+                    family1_guise.add_opponent_answer(answer, True)
+            elif current_family != name2 and family2_guise != None:
+                family2_guise.add_opponent_answer(answer, True)
+            if current_family == name1 and family1_guise != None:
+                family1_guise.receive_feedback(answer, True)
+            elif current_family == name2 and family2_guise != None:
+                family2_guise.receive_feedback(answer, True)
             play_sound("sounds/correct.mp3")
             family_points[current_family] += board[answer]
             visited[answer] = True
@@ -149,9 +157,13 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
                     info_label.setText("WRONG!")
                     QApplication.processEvents()
                 if current_family != name1 and family1_guise != None:
-                    family1_guise.add_wrong_answer(answer)
+                    family1_guise.add_opponent_answer(answer, False)
                 elif current_family != name2 and family2_guise != None:
-                    family2_guise.add_wrong_answer(answer)
+                    family2_guise.add_opponent_answer(answer, False)
+                if current_family == name1 and family1_guise != None:
+                    family1_guise.receive_feedback(answer, False)
+                elif current_family == name2 and family2_guise != None:
+                    family2_guise.receive_feedback(answer, False)
                 play_sound("sounds/wrong.wav")
             else:
                 if info_label == None:
@@ -160,6 +172,14 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
                     info_label.setText("CORRECT!")
                     QApplication.processEvents()
                 play_sound("sounds/correct.mp3")
+                if current_family != name1 and family1_guise != None:
+                    family1_guise.add_opponent_answer(answer, True)
+                elif current_family != name2 and family2_guise != None:
+                    family2_guise.add_opponent_answer(answer, True)
+                if current_family == name1 and family1_guise != None:
+                    family1_guise.receive_feedback(answer, True)
+                elif current_family == name2 and family2_guise != None:
+                    family2_guise.receive_feedback(answer, True)
                 family_points[current_family] += board[closest]
                 visited[closest] = True
                 points_gained = True
@@ -208,6 +228,10 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
                 info_label.setText("CORRECT!")
                 QApplication.processEvents()
             play_sound("sounds/correct.mp3")
+            if opposite_guise != None:
+                    opposite_guise.add_opponent_answer(answer, True)
+            if family_guise != None:
+                family_guise.receive_feedback(answer, True)
             turn_score += board[answer]
             visited[answer] = True
         else:
@@ -219,7 +243,9 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
                     info_label.setText("WRONG!")
                     QApplication.processEvents()
                 if opposite_guise != None:
-                    opposite_guise.add_wrong_answer(answer)
+                    opposite_guise.add_opponent_answer(answer, False)
+                if family_guise != None:
+                    family_guise.receive_feedback(answer, False)
                 guesses -= 1
                 play_sound("sounds/wrong.wav")
             else:
@@ -229,6 +255,10 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
                     info_label.setText("CORRECT!")
                     QApplication.processEvents()
                 play_sound("sounds/correct.mp3")
+                if opposite_guise != None:
+                    opposite_guise.add_opponent_answer(answer, True)
+                if family_guise != None:
+                    family_guise.receive_feedback(answer, True)
                 turn_score += board[closest]
                 visited[closest] = True
         if board_label == None:
@@ -238,7 +268,11 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
         sleep(0.75)
 
         if all(visited.values()):
-            print("All answers revealed!")
+            if info_label == None:
+                print("All answers revealed!")
+            else:
+                info_label.setText("All answers revealed!")
+                QApplication.processEvents()
             return turn_score, True
     return turn_score, False
 
@@ -272,7 +306,7 @@ def fast_money(rounds: Dict[str, List[str]], voice:bool, host:bool, client, topi
                 if i == 0:
                     break
                 else:
-                    if list(first_round.keys())[question] != answer:
+                    if list(first_round.keys())[question] != answer.lower():
                         break
                     else:
                         if info_label == None:
@@ -291,8 +325,10 @@ def fast_money(rounds: Dict[str, List[str]], voice:bool, host:bool, client, topi
                     score = board[closest]
             
             if i == 0:
-                first_round[answer] = score
+                first_round[answer.lower()] = score
             else:
-                second_round[answer] = score
+                second_round[answer.lower()] = score
+        if family_guise != None:
+            family_guise.clear_memory()
     
     return first_round, second_round

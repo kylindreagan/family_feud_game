@@ -3,7 +3,7 @@ from typing import List, Dict, Tuple
 from qwindows import HostDialog
 
 def check_similarity(AI:bool, answer:str, visited:Dict[str, bool], client) -> str:
-    unvisited = [x for x in visited if not visited[x]]
+    unvisited = [x.lower() for x in visited if not visited[x]]
     inverse_visited = [not visited[x] for x in visited]
     first_chance = string_sim(answer, unvisited)
     if first_chance == "null":
@@ -48,5 +48,5 @@ def close_enough_AI(answer:str, unvisited: List[str], client) -> str:
     else: return "null"
 
 def string_sim(answer:str, unvisited: List[str]) -> str:
-    closest_match = get_close_matches(answer, unvisited, n=1, cutoff=0.8)
+    closest_match = get_close_matches(answer.lower(), unvisited, n=1, cutoff=0.8)
     return closest_match[0] if closest_match else "null"

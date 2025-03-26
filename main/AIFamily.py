@@ -1,7 +1,8 @@
 PROMPT_TEMPLATE = (
     "You are a member of a family playing Family Feud."
     "You will be given a topic and will have to return an answer as concisely as possible, only give the answers with no filler."
-    "Do not repeat previous answers, you will be shown the current board before every guess."
+    "You will be shown the current board with every guess, do not guess anything already on the board."
+    "You will be shown your own answers and your opponents answers as they happen, do not repeat these either."
 )
 
 class Family_Guise:
@@ -29,20 +30,36 @@ class Family_Guise:
         stream=False,
         )
 
-        self.log.append({
-        "role": "assistant",
-        "content": chat_completion.choices[0].message.content
-        })
-
         return chat_completion.choices[0].message.content
     
-    def add_wrong_answer(self, wrong_answer):
-        sent_message = f"The other family has said the answer {wrong_answer}, which was not on the board"
-        self.log.append({
-                "role": "user",
-                "content": sent_message,
-            })
+    def add_opponent_answer(self, answer, correct):
+        if not correct:
+            sent_message = f"The other family has said the answer {answer}, which was not on the board"
+            self.log.append({
+                    "role": "user",
+                    "content": sent_message,
+                })
+        else:
+            sent_message = f"The other family has said the answer {answer}, which was on the board"
+            self.log.append({
+                    "role": "user",
+                    "content": sent_message,
+                })
     
+    def receive_feedback(self, answer, correct):
+        if not correct:
+            sent_message = f"Your answer of {answer} was incorrect and not on the board."
+            self.log.append({
+                    "role": "user",
+                    "content": sent_message,
+                })
+        else:
+            sent_message = f"Your answer of {answer} was correct and on the board."
+            self.log.append({
+                    "role": "user",
+                    "content": sent_message,
+                })
+
     def clear_memory(self):
         self.log=[
             {
