@@ -24,9 +24,9 @@ def display_board(board: Dict[str, int], visited: Dict[str, bool], labels: List[
         label.setText(str(idx+1)+": "+display)
         idx += 1
 
-def display_fm_board(round: Dict[str, int], labels: List[QLabel]):
+def display_fm_board(round: List[str], scores: List[int], labels: List[QLabel]):
     idx = 0
-    for answer, points in round.items():
+    for answer, points in zip(round, scores):
         # Select the label for this answer
         label = labels[idx]
         
@@ -35,9 +35,10 @@ def display_fm_board(round: Dict[str, int], labels: List[QLabel]):
         display = f"{answer} ###"
         label.setText(str(idx+1)+": "+display)
         QApplication.processEvents()
-        sleep(3)
+        sleep(2)
         # Set the label text
         play_sound("sounds/surveysays.mp3")
+        sleep(1)
         display = f"{answer} {points}"
         label.setText(str(idx+1)+": "+display)
         if points == 0:
@@ -45,9 +46,8 @@ def display_fm_board(round: Dict[str, int], labels: List[QLabel]):
         else:
             play_sound("sounds/fmcorrect.mp3")
         QApplication.processEvents()
-        sleep(2)
         
-        sleep(1)
+        sleep(.25)
         idx += 1
 
 
@@ -285,8 +285,8 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
     return turn_score, False
 
 def fast_money(rounds: Dict[str, List[str]], voice:bool, host:bool, client, topic_label, info_label, family_guise):
-    first_round = {}
-    second_round = {}
+    first_round, first_scores = [], []
+    second_round, second_scores = [], []
     for i in range(2):
         question = 1
         for topic in rounds:
@@ -314,7 +314,7 @@ def fast_money(rounds: Dict[str, List[str]], voice:bool, host:bool, client, topi
                 if i == 0:
                     break
                 else:
-                    if list(first_round.keys())[question] != answer.lower():
+                    if first_round[question] != answer.lower():
                         break
                     else:
                         if info_label == None:
@@ -333,10 +333,12 @@ def fast_money(rounds: Dict[str, List[str]], voice:bool, host:bool, client, topi
                     score = board[closest]
             
             if i == 0:
-                first_round[answer.lower()] = score
+                first_round.append(answer.lower())
+                first_scores.append(score)
             else:
-                second_round[answer.lower()] = score
+                second_round.append(answer.lower())
+                second_scores.append(score)
         if family_guise != None:
             family_guise.clear_memory()
     
-    return first_round, second_round
+    return first_round, second_round, first_scores, second_scores

@@ -264,20 +264,20 @@ class FamilyFeudApp(QWidget):
             
             if self.score[family1_name] >= self.score[family2_name]:
                 self.score_label.setText(f"{family1_name}:0")
-                first_round, second_round = fast_money(fm_rounds, self.voice, self.AI_host, self.client, self.topic_label, self.info_label, family1_guise)
+                first_round, second_round, first_scores, second_scores = fast_money(fm_rounds, self.voice, self.AI_host, self.client, self.topic_label, self.info_label, family1_guise)
             
             else:
                 self.score_label.setText(f"{family1_name}:0")
-                first_round, second_round = fast_money(fm_rounds, self.voice, self.AI_host, self.client, self.topic_label, self.info_label, family2_guise)
+                first_round, second_round, first_scores, second_scores = fast_money(fm_rounds, self.voice, self.AI_host, self.client, self.topic_label, self.info_label, family2_guise)
             
-            x = sum(first_round.values())
-            display_fm_board(first_round, self.fmboardA)
+            x = sum(first_scores)
+            display_fm_board(first_round, first_scores, self.fmboardA)
             self.score_label.setText(f"{family1_name}:{x}")
             dialog = ContinueDialog()
             dialog.exec_()  # This will block until the dialog is closed
 
-            y = sum(second_round.values())
-            display_fm_board(second_round, self.fmboardB)
+            y = sum(second_scores)
+            display_fm_board(second_round, second_scores, self.fmboardB)
             self.score_label.setText(f"{family1_name}:{x+y}")
             
             if x+y >= 200:
