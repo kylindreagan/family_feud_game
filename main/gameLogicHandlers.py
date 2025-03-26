@@ -24,6 +24,20 @@ def display_board(board: Dict[str, int], visited: Dict[str, bool], labels: List[
         label.setText(str(idx+1)+": "+display)
         idx += 1
 
+def display_fm_board(round: Dict[str, int], labels: List[QLabel]):
+    idx = 0
+    for answer, points in round.items():
+        # Select the label for this answer
+        label = labels[idx]
+        
+        # Display answer and points if it's visited or if reveal is True
+        display = f"{answer} {points}"
+        
+        # Set the label text
+        label.setText(str(idx+1)+": "+display)
+        idx += 1
+
+
 def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[str, bool], client, topic_label=None, turn_label=None, info_label=None, voice = True, host= True, family_guise=None) -> Tuple[bool, int]:
     if turn_label == None:
         print("The", stealing_name, "family has a chance to steal!")
@@ -42,9 +56,9 @@ def steal(stealing_name: str, topic:str, board: Dict[str, int], visited: Dict[st
         answer = family_guise.get_answer(board, topic)
     
     if info_label == None:
-        print("Survey Says!")
+        print(f"Show me {answer}!")
     else:
-        info_label.setText("Survey Says!")
+        info_label.setText(f"Show me {answer}!")
         QApplication.processEvents()
     sleep(1)
     if answer in board and not visited[answer]:
@@ -105,9 +119,9 @@ def decide_turn(name1: str, name2: str, topic: str, board: Dict[str, int], visit
                 answer = dialog.get_data()
         
         if info_label == None:
-            print("Survey Says!")
+            print(f"Show me {answer}!")
         else:
-            info_label.setText("Survey Says!")
+            info_label.setText(f"Show me {answer}!")
             QApplication.processEvents()
         sleep(1)
         
@@ -176,9 +190,9 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
                 answer = dialog.get_data()
         
         if info_label == None:
-            print("Survey Says!")
+            print(f"Show me {answer}!")
         else:
-            info_label.setText("Survey Says!")
+            info_label.setText(f"Show me {answer}!")
             QApplication.processEvents()
         sleep(1)
         
@@ -222,3 +236,58 @@ def handle_turn(family_name: str, topic: str, board: Dict[str, int], visited: Di
             print("All answers revealed!")
             return turn_score, True
     return turn_score, False
+
+def fast_money(rounds: Dict[str, List[str]], voice:bool, host:bool, client, topic_label, info_label, family_guise):
+    first_round = {}
+    second_round = {}
+    for i in range(2):
+        question = 1
+        for topic in rounds:
+            if topic_label != None:
+                topic_label.setText(topic)
+                QApplication.processEvents()
+            else:
+                print(topic)
+            sleep(.5)
+            board = rounds[topic]
+            while True:
+                if family_guise != None:
+                    answer = family_guise.get_answer(board, topic)
+                else:
+                    if voice:
+                        answer = speech_to_text(topic, topic_label, info_label)
+                    else:
+                        dialog = AnswerDialog()
+                        dialog.exec_()  # This will block until the dialog is closed
+                        answer = dialog.get_data()
+                if info_label != None:
+                    info_label.setText(f"You answered {answer}")
+                else:
+                    print(f"You answered {answer}")
+                if i == 0:
+                    break
+                else:
+                    if list(first_round.keys())[question] != answer:
+                        break
+                    else:
+                        if info_label == None:
+                            print("Try Again")
+                        else:
+                            info_label.setText("Try Again")
+                            QApplication.processEvents()
+            
+            if answer in board:
+                score = board[answer]
+            else:
+                closest = check_similarity(host, answer, {x:False for x in board}, client)
+                if closest == "null":
+                    score = 0
+                else:
+                    score = board[closest]
+            
+            if i == 0:
+                first_round[answer] = score
+            else:
+                second_round[answer] = score
+    
+    return first_round, second_round

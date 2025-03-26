@@ -20,12 +20,6 @@ def speech_to_text(topic:str, topic_label=None, info_label=None) -> str:
         try:
             #Google's Speech Recognition for regular recognition
             text = recognizer.recognize_google(audio_data).lower()
-            if info_label == None:
-                print("You said:", text)
-            else:
-                info_label.setText("You said: "+text)
-                QApplication.processEvents()
-                sleep(.5)
             return text
         except sr.UnknownValueError:
             if info_label == None:
@@ -54,7 +48,6 @@ def speech_to_text_offline(topic: str) -> str:
             
             #PocketSphinx for offline recognition
             text = recognizer.recognize_sphinx(audio_data).lower()
-            print("You said:", text)
             return text
         except sr.UnknownValueError:
             print("Sorry, could not understand audio. Please speak clearer.")

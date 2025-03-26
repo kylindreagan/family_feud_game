@@ -1,0 +1,30 @@
+Name a type of shoe 4
+Tennis 70
+Loafer 19
+Flip-Flop 6
+Heels 5
+Name a sorting algorithm 6
+Merge 30
+Bubble 20
+Quick 17
+Bucket 16
+Bogo 14
+Stalin 3
+Name a fruit 6
+Apple 22
+Banana 21
+Strawberry 19
+Orange 18
+Watermelon 17
+Pineapple 3
+Name a President 4
+George Washington 54
+Richard Nixon 33
+Abraham Lincoln 10
+Rutherford B. Hayes 3
+Name a Minor Axis Power in WWII 5
+Hungary 40
+Romania 30
+Bulgaria 15
+Slovakia 14
+Croatia 1

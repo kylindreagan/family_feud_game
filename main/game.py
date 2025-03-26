@@ -1,11 +1,11 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from time import sleep
 from groq import Groq
-from gameLogicHandlers import steal, decide_turn, handle_turn, display_board
-from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic
+from gameLogicHandlers import steal, decide_turn, handle_turn, display_board, display_fm_board, fast_money
+from questiongenerators import questions_from_AI, questions_from_file, questions_from_topic, fast_money_from_file, fast_money_from_topics
 from qwindows import FileDialog, EmailDialog, ContinueDialog, ErrorDialog
 from sound_player import play_sound, stop_sound
 import re
@@ -29,13 +29,14 @@ class FamilyFeudApp(QWidget):
         self.family1 = False
         self.family2 = False
         self.multiplier = 1
+        self.play_fast_money = True
         self.initUI()
     
     def initUI(self):
         self.setWindowTitle('Family Feud Game')
         self.setGeometry(100, 100, 800, 600)
 
-        main_layout = QVBoxLayout()
+        self.main_layout = QVBoxLayout()
 
         self.family1_name_input = QLineEdit(self)
         self.family1_name_input.setPlaceholderText("Family 1 - Enter your name")
@@ -62,7 +63,7 @@ class FamilyFeudApp(QWidget):
         pixmap_image = QPixmap("images/logofued.png")
         self.image_label.setPixmap(pixmap_image)
         self.image_label.setGeometry(100, 100, 200, 150)
-        main_layout.addWidget(self.image_label)
+        self.main_layout.addWidget(self.image_label)
 
         self.score_label = QLabel("Current Scores:\nFamily 1: 0\nFamily 2: 0", self)
         self.topic_label = QLabel("Topic: None", self)
@@ -87,6 +88,9 @@ class FamilyFeudApp(QWidget):
         self.AI_host = QCheckBox("Use AI host instead of human host?", self)
         self.AI_host.setChecked(self.host)
         self.AI_host.stateChanged.connect(self.host_toggle)
+        self.fm_check = QCheckBox("Have a fast money round?", self)
+        self.fm_check.setChecked(self.play_fast_money)
+        self.fm_check.stateChanged.connect(self.fm_toggle)
 
         self.num_rounds = QLineEdit(self)
         self.num_rounds.setPlaceholderText("Enter number of rounds: ")
@@ -101,14 +105,18 @@ class FamilyFeudApp(QWidget):
         self.menu_button.setEnabled(False)
         self.menu_button.setVisible(False)
         
-        main_layout.addWidget(self.AI_use)
-        main_layout.addWidget(self.num_rounds)
-        main_layout.addWidget(self.voice_commands)
-        main_layout.addLayout(name_input_layout)
-        main_layout.addWidget(self.AI_host)
-        main_layout.addWidget(self.start_game_button)
+        self.main_layout.addWidget(self.AI_use)
+        self.main_layout.addWidget(self.num_rounds)
+        self.main_layout.addWidget(self.voice_commands)
+        self.main_layout.addLayout(name_input_layout)
+        self.main_layout.addWidget(self.AI_host)
+        self.main_layout.addWidget(self.fm_check)
+        self.main_layout.addWidget(self.start_game_button)
         
-        self.setLayout(main_layout)
+        self.setLayout(self.main_layout)
+        self.fmboardA = [QLabel("", self) for _ in range(5)]
+        self.fmboardB = [QLabel("", self) for _ in range(5)]
+
 
         self.theme = play_sound("sounds/themesong.mp3")
 
@@ -148,19 +156,12 @@ class FamilyFeudApp(QWidget):
                 rounds = questions_from_file(n)
         self.rounds = rounds
 
-        family1_guise = None
-        family2_guise = None
+        family1_guise = Family_Guise(self.client) if self.family1 else None
+        family2_guise = Family_Guise(self.client) if self.family2 else None
 
-        if self.family1:
-            family1_guise = Family_Guise(self.client)
-        
-        if self.family2:
-            family2_guise = Family_Guise(self.client)
+        self.run_game(n, family1_name, family2_name, family1_guise, family2_guise)
 
-
-        self.run_game(family1_name, family2_name, family1_guise, family2_guise)
-
-    def run_game(self, family1_name, family2_name, family1_guise, family2_guise):
+    def run_game(self, n, family1_name, family2_name, family1_guise, family2_guise):
         stop_sound(self.theme)
         self.remove_initial_widgets()
         current_round = 0
@@ -227,7 +228,7 @@ class FamilyFeudApp(QWidget):
             sleep(2)
 
             current_round += 1
-            if current_round >= int(self.num_rounds.text())-2:
+            if current_round >= n-2:
                 self.multiplier += 1
             sleep(.25)
 
@@ -244,6 +245,35 @@ class FamilyFeudApp(QWidget):
 
 
         self.final_scores(family1_name, family2_name)
+
+        if self.play_fast_money:
+            self.start_fm()
+            if self.AI:
+                fm_rounds = fast_money_from_topics(self.client, True)
+            else:
+                dialog = FileDialog()
+                dialog.exec_()  # This will block until the dialog is closed
+                file_name = dialog.get_data()
+                try:
+                    fm_rounds = fast_money_from_file(5, "games/"+file_name+".txt")
+                except Exception:
+                    fm_rounds = fast_money_from_file(5)
+            
+            if self.score[family1_name] >= self.score[family2_name]:
+                first_round, second_round = fast_money(fm_rounds, self.voice, self.AI_host, self.client, self.topic_label, self.info_label, family1_guise)
+            
+            else:
+                first_round, second_round = fast_money(fm_rounds, self.voice, self.AI_host, self.client, self.topic_label, self.info_label, family2_guise)
+
+            display_fm_board(first_round, self.fmboardA)
+            dialog = ContinueDialog()
+            dialog.exec_()  # This will block until the dialog is closed
+
+            display_fm_board(second_round, self.fmboardB)
+            dialog = ContinueDialog()
+            dialog.exec_()  # This will block until the dialog is closed
+
+            self.end_fm()
         
     def remove_initial_widgets(self):
         # Remove widgets related to game setup
@@ -257,6 +287,7 @@ class FamilyFeudApp(QWidget):
         self.layout().removeWidget(self.AI_host)
         self.layout().removeWidget(self.AI_family1)
         self.layout().removeWidget(self.AI_family2)
+        self.layout().removeWidget(self.fm_check)
 
         # Delete the widgets
         self.family1_name_input.setVisible(False)
@@ -269,6 +300,7 @@ class FamilyFeudApp(QWidget):
         self.AI_host.setVisible(False)
         self.AI_family1.setVisible(False)
         self.AI_family2.setVisible(False)
+        self.fm_check.setVisible(False)
 
         self.layout().addWidget(self.mult_label)
         self.layout().addWidget(self.score_label)
@@ -289,6 +321,44 @@ class FamilyFeudApp(QWidget):
         self.topic_label.setVisible(True)
         self.info_label.setVisible(True)
     
+    def start_fm(self):
+        self.clear_layout(self.main_layout)
+        self.main_layout.deleteLater()
+
+        self.clear_board()
+        self.mult_label.clear()
+        self.turn_label.clear()
+
+        self.fm_layout = QHBoxLayout()
+
+        fmboardA_layout = QVBoxLayout()
+        fmboardB_layout = QVBoxLayout()
+        for i in range(5):
+            A = self.fmboardA[i]
+            B = self.fmboardB[i]
+            A.setText("###### ###")
+            B.setText("###### ###")
+            fmboardA_layout.addWidget(A)
+            fmboardB_layout.addWidget(B)
+
+        self.fm_layout.addWidget(self.topic_label)
+        self.fm_layout.addWidget(self.info_label)
+        
+        self.fm_layout.addLayout(fmboardA_layout)
+        self.fm_layout.addLayout(fmboardB_layout)
+        self.layout().addLayout(self.fm_layout)
+    
+    def end_fm(self):
+        for i in range(5):
+            A = self.fmboardA[i]
+            B = self.fmboardB[i]
+            A.setText("")
+            B.setText("")
+        
+        self.clear_layout(self.fm_layout)
+        self.fm_layout.deleteLater()
+        self.layout().invalidate()
+    
     def reinit_widgets(self):
         self.menu_button.setEnabled(False)
         self.menu_button.setVisible(False)
@@ -303,6 +373,7 @@ class FamilyFeudApp(QWidget):
         self.layout().addWidget(self.AI_family2)
         self.layout().addWidget(self.AI_host)
         self.layout().addWidget(self.start_game_button)
+        self.layout().addWidget(self.fm_check)
 
         # Delete the widgets
         self.family1_name_input.setVisible(True)
@@ -315,11 +386,13 @@ class FamilyFeudApp(QWidget):
         self.AI_host.setVisible(True)
         self.AI_family1.setVisible(True)
         self.AI_family2.setVisible(True)
+        self.fm_check.setVisible(True)
 
         self.layout().removeWidget(self.score_label)
         self.layout().removeWidget(self.topic_label)
-        self.layout().removeWidget(self.turn_label)
         self.layout().removeWidget(self.info_label)
+        
+        self.layout().removeWidget(self.turn_label)
         self.layout().removeWidget(self.board1)
         self.layout().removeWidget(self.board2)
         self.layout().removeWidget(self.board3)
@@ -335,14 +408,7 @@ class FamilyFeudApp(QWidget):
         self.topic_label.setVisible(False)
         self.info_label.setVisible(False)
 
-        self.board1.clear()
-        self.board2.clear()
-        self.board3.clear()
-        self.board4.clear()
-        self.board5.clear()
-        self.board6.clear()
-        self.board7.clear()
-        self.board8.clear()
+        self.clear_board()
         self.mult_label.clear()
     
     def clear_board(self):
@@ -354,6 +420,16 @@ class FamilyFeudApp(QWidget):
         self.board6.clear()
         self.board7.clear()
         self.board8.clear()
+    
+    def clear_layout(self, layout):
+        while layout.count():
+            item = layout.itemAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater() # or widget.setParent(None)
+            layout.removeItem(item)
+
+
 
     def update_game_info(self, family1_name, family2_name, topic, round_num):
         self.topic_label.setText(f"We asked 100 people, {topic}")
@@ -363,6 +439,8 @@ class FamilyFeudApp(QWidget):
     def final_scores(self, family1_name, family2_name):
         self.score_label.setText(f"Final Scores:\n{family1_name}: {self.score[family1_name]}\n{family2_name}: {self.score[family2_name]}")
         self.turn_label.setText("Game Over!")
+        dialog = ContinueDialog()
+        dialog.exec_()  # This will block until the dialog is closed
     
     def AI_toggle(self):
         self.AI = not self.AI
@@ -378,6 +456,9 @@ class FamilyFeudApp(QWidget):
     
     def family2_toggle(self):
         self.family2 = not self.family2
+    
+    def fm_toggle(self):
+        self.play_fast_money = not self.play_fast_money
     
     def send_email(self, to_email, subject, body, smtp_server, smtp_port, sender_email, sender_password):
         server = smtplib.SMTP(smtp_server, smtp_port)

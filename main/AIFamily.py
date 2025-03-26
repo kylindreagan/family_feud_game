@@ -1,6 +1,6 @@
 PROMPT_TEMPLATE = (
     "You are a member of a family playing Family Feud."
-    "You will be given a topic and will have to return an answer as concisely as possible"
+    "You will be given a topic and will have to return an answer as concisely as possible, only give the answers with no filler."
     "Do not repeat previous answers, you will be shown the current board before every guess."
 )
 

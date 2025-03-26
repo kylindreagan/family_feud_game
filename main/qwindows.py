@@ -188,6 +188,28 @@ class ErrorDialog(QDialog):
     def on_submit(self):
         self.accept()
 
+class FMStartDialog(QDialog):
+    def __init__(self, family_name:str):
+        super().__init__()
+
+        self.setWindowTitle("Continue")
+
+        self.layout = QFormLayout()
+
+        self.submit_button = QPushButton("Continue", self)
+        self.submit_button.clicked.connect(self.on_submit)
+
+        self.error_label = QLabel("Congrats to the {family_name} family! It's time for the fast money round!", self)
+
+        self.submit_button.clicked.connect(self.on_submit)
+        
+        self.layout.addRow(self.error_label)
+        self.layout.addRow(self.submit_button)
+        self.setLayout(self.layout)
+    
+    def on_submit(self):
+        self.accept()
+
 class HostDialog(QDialog):
     def __init__(self, answer):
         super().__init__()
