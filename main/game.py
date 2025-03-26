@@ -13,10 +13,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from AIFamily import Family_Guise
-
-#Fill these in with your own email, potential way around this in the works.
-SENDER_EMAIL =  None
-SENDER_PASSWORD = None
+import requests
 
 class FamilyFeudApp(QWidget):
     def __init__(self):
@@ -30,6 +27,10 @@ class FamilyFeudApp(QWidget):
         self.family2 = False
         self.multiplier = 1
         self.play_fast_money = True
+        self.smtp_server = "mail.guerrillamail.com"  # GuerrillaMail's SMTP
+        self.smtp_port = 587  # Common SMTP port for TLS
+        self.temp_email = None
+        self.temp_password = None
         self.initUI()
     
     def initUI(self):
@@ -187,11 +188,11 @@ class FamilyFeudApp(QWidget):
                 continue
 
             if self.email != None:
-                body = "" 
+                body = "We asked 100 people, {topic}" 
                 for idx, (answer, points) in enumerate(board.items(), start=1):
                     display = f"{idx}:{answer} {points} \n"
                     body.join(display)
-                self.send_email(self.email, f"Family Feud Round {current_round+1}", body, "smtp.gmail.com", 465, SENDER_EMAIL, SENDER_PASSWORD)
+                self.send_email(self.email, f"Family Feud Round {current_round+1}", body)
 
             blackout = False
             visited = {i: False for i in board}
@@ -474,23 +475,41 @@ class FamilyFeudApp(QWidget):
     def fm_toggle(self):
         self.play_fast_money = not self.play_fast_money
     
-    def send_email(self, to_email, subject, body, smtp_server, smtp_port, sender_email, sender_password):
-        server = smtplib.SMTP(smtp_server, smtp_port)
+    def generate_temp_email(self):
+        # Using Guerrilla Mail's API to get a temporary email address
         try:
-            server = smtplib.SMTP(smtp_server, smtp_port)
+            response = requests.get('https://api.guerrillamail.com/ajax.php?f=get_email_address')
+            response_data = response.json()
+            print(response_data)
+            self.temp_email = response_data['email_addr']
+            self.temp_password = response_data['sid_token']
+
+            print(f"Generated Temp Email: {self.temp_email}")
+            return self.temp_email
+
+        except Exception as e:
+            print(f"Error generating temp email: {e}")
+            return None, None
+    
+    def send_email(self, to_email, subject, body):
+        if not self.temp_email:
+            self.generate_temp_email()  # Generate temp email if it's not already set
+        server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+        try:
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
             server.starttls()  # Use TLS to secure the connection
-            server.login(sender_email, sender_password)
+            server.login(self.temp_email, '')
 
             # Prepare the email
             msg = MIMEMultipart()
-            msg['From'] = sender_email
+            msg['From'] = self.temp_email
             msg['To'] = to_email
             msg['Subject'] = subject
 
             msg.attach(MIMEText(body, 'plain'))
 
             # Send the email
-            server.sendmail(sender_email, to_email, msg.as_string())
+            server.sendmail(self.temp_email, to_email, msg.as_string())
 
             print("Email sent successfully!")
 
