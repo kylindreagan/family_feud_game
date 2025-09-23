@@ -1,7 +1,7 @@
 # family_feud_game
 A Family Feud game with optional AI integration.
 
-This is a fan project with no ties to Family Feud or Fremantle
+This is a fan project intended for educational purposes with no ties to Family Feud or Fremantle
 
 CREDITS:
 
